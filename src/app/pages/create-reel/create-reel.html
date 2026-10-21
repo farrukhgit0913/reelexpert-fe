@@ -161,7 +161,7 @@
     <section
       class="panel result-card"
       aria-live="polite"
-      aria-busy="{{ loading }}"
+      [attr.aria-busy]="loading"
     >
       <ng-container *ngIf="generatedReel as reel; else emptyState">
         <div class="result-header">
@@ -261,6 +261,73 @@
             </p>
           </article>
         </div>
+
+
+<div class="result-section video-creation-section">
+  <span class="result-label">
+    <span class="result-number">05</span>
+    CREATE YOUR VIDEO
+  </span>
+
+  <div class="form-field">
+    <label for="stock-footage">Background footage</label>
+
+    <select
+      id="stock-footage"
+      [(ngModel)]="selectedFootage"
+    >
+      <option value="" disabled>Select footage</option>
+      <option
+        *ngFor="let footage of availableFootage"
+        [value]="footage"
+      >
+        {{ footage }}
+      </option>
+    </select>
+  </div>
+
+  <button
+    type="button"
+    class="btn-primary generate-btn"
+    [disabled]="narrationLoading || renderLoading || !selectedFootage"
+    (click)="generateNarrationAndRender()"
+  >
+    {{
+      narrationLoading
+        ? 'Generating narration...'
+        : renderLoading
+          ? 'Rendering video...'
+          : 'Generate video'
+    }}
+  </button>
+
+  <p *ngIf="workflowMessage" aria-live="polite">
+    {{ workflowMessage }}
+  </p>
+
+  <audio
+    *ngIf="audioUrl"
+    [src]="audioUrl"
+    controls
+    preload="metadata"
+  ></audio>
+
+  <div *ngIf="videoUrl" class="video-preview">
+    <h3>Your finished reel</h3>
+
+    <video
+      [src]="videoUrl"
+      controls
+      playsinline
+      preload="metadata"
+    ></video>
+
+    <a [href]="videoUrl" download="reelexpert-reel.mp4">
+      Download reel
+    </a>
+  </div>
+</div>
+
 
         <button
           type="button"

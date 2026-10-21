@@ -77,3 +77,38 @@
     animation-duration: 1.5s;
   }
 }
+
+
+.video-creation-section {
+  margin-top: 24px;
+}
+
+.video-creation-section audio {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.video-preview {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.video-preview video {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  max-height: 570px;
+  aspect-ratio: 9 / 16;
+  object-fit: contain;
+  border-radius: 16px;
+  background: #0f172a;
+}
+
+.video-preview a {
+  width: fit-content;
+  color: inherit;
+  text-decoration: underline;
+}
+
