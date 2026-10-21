@@ -1,66 +1,68 @@
-<section class="mx-auto max-w-6xl space-y-8 p-6 lg:p-10">
 
-  <header>
-    <p class="text-sm font-semibold uppercase tracking-widest text-emerald-400">
-      REELEXPERT AI
-    </p>
-    <h1 class="mt-2 text-3xl font-bold text-white">
-      Create your next reel
-    </h1>
-    <p class="mt-2 text-slate-400">
-      Turn your idea into a compelling short-form video script.
-    </p>
+<section class="create-page">
+  <header class="page-heading">
+    <div>
+      <span class="eyebrow">AI CONTENT STUDIO</span>
+      <h1>Create your next reel</h1>
+      <p>Turn your idea into engaging short-form content with AI.</p>
+    </div>
+
+    <div class="ai-status">
+      <span class="status-dot"></span>
+      AI-powered creation
+    </div>
   </header>
 
-  <div class="grid gap-8 lg:grid-cols-2">
-
+  <div class="create-grid">
     <!-- Reel settings -->
     <form
       [formGroup]="reelForm"
       (ngSubmit)="generateReel()"
-      class="space-y-5 rounded-2xl border border-slate-700 bg-slate-900 p-6"
+      class="panel settings-card"
     >
-      <div>
-        <label class="mb-2 block text-sm font-medium text-white">
-          What's your reel about?
-        </label>
+      <div class="panel-heading">
+        <div class="heading-icon">✦</div>
+        <div>
+          <h2>Reel settings</h2>
+          <p>Tell us what you want to create.</p>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="topic">What's your reel about?</label>
         <textarea
+          id="topic"
           formControlName="topic"
           rows="4"
           maxlength="2000"
-          placeholder="Example: 5 AI tools that save developers hours..."
-          class="w-full rounded-xl border border-slate-700 bg-slate-950 p-4 text-white outline-none focus:border-emerald-400"
+          placeholder="Example: 5 AI tools that save developers hours every week..."
         ></textarea>
 
-        <p
-          *ngIf="reelForm.controls.topic.touched &&
-                 reelForm.controls.topic.invalid"
-          class="mt-1 text-sm text-red-400"
-        >
-          Please enter a topic.
-        </p>
+        <div class="field-footer">
+          <p
+            *ngIf="reelForm.controls.topic.touched && reelForm.controls.topic.invalid"
+            class="field-error"
+          >
+            Please enter a topic.
+          </p>
+          <span class="field-hint">Describe your idea in a few words.</span>
+        </div>
       </div>
 
-      <div>
-        <label class="mb-2 block text-sm text-slate-300">
-          Target audience
-        </label>
+      <div class="form-field">
+        <label for="audience">Target audience</label>
         <input
+          id="audience"
+          type="text"
           formControlName="audience"
           placeholder="Young entrepreneurs"
-          class="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white outline-none focus:border-emerald-400"
         />
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="mb-2 block text-sm text-slate-300">
-            Platform
-          </label>
-          <select
-            formControlName="platform"
-            class="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
-          >
+      <div class="form-row">
+        <div class="form-field">
+          <label for="platform">Platform</label>
+          <select id="platform" formControlName="platform">
             <option>Instagram Reels</option>
             <option>YouTube Shorts</option>
             <option>TikTok</option>
@@ -68,14 +70,9 @@
           </select>
         </div>
 
-        <div>
-          <label class="mb-2 block text-sm text-slate-300">
-            Language
-          </label>
-          <select
-            formControlName="language"
-            class="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
-          >
+        <div class="form-field">
+          <label for="language">Language</label>
+          <select id="language" formControlName="language">
             <option>English</option>
             <option>Urdu</option>
             <option>Roman Urdu</option>
@@ -84,14 +81,9 @@
           </select>
         </div>
 
-        <div>
-          <label class="mb-2 block text-sm text-slate-300">
-            Duration
-          </label>
-          <select
-            formControlName="duration"
-            class="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
-          >
+        <div class="form-field">
+          <label for="duration">Duration</label>
+          <select id="duration" formControlName="duration">
             <option [ngValue]="15">15 seconds</option>
             <option [ngValue]="30">30 seconds</option>
             <option [ngValue]="45">45 seconds</option>
@@ -100,14 +92,9 @@
           </select>
         </div>
 
-        <div>
-          <label class="mb-2 block text-sm text-slate-300">
-            Style
-          </label>
-          <select
-            formControlName="style"
-            class="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-white"
-          >
+        <div class="form-field">
+          <label for="style">Content style</label>
+          <select id="style" formControlName="style">
             <option>Engaging</option>
             <option>Educational</option>
             <option>Motivational</option>
@@ -118,128 +105,137 @@
         </div>
       </div>
 
-      <p *ngIf="errorMessage" class="text-sm text-red-400">
-        {{ errorMessage }}
-      </p>
+      <div *ngIf="errorMessage" class="error-banner">
+        <span>!</span>
+        <p>{{ errorMessage }}</p>
+      </div>
 
       <button
         type="submit"
+        class="btn-primary generate-btn"
         [disabled]="loading"
-        class="w-full rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
       >
+        <span *ngIf="!loading">✦</span>
         {{ loading ? 'Generating your reel...' : 'Generate with AI' }}
+        <span *ngIf="!loading" class="button-arrow">→</span>
       </button>
+
+      <p class="form-note">
+        Your idea will be processed using your configured AI service.
+      </p>
     </form>
 
     <!-- Generated content -->
-    <div class="min-w-0 rounded-2xl border border-slate-700 bg-slate-900 p-6">
-
+    <section class="panel result-card">
       <ng-container *ngIf="generatedReel; else emptyState">
-        <div class="mb-6 flex items-start justify-between gap-3">
+        <div class="result-header">
           <div>
-            <p class="text-sm text-emerald-400">SCRIPT GENERATED</p>
-            <h2 class="mt-2 text-xl font-bold text-white">
-              {{ generatedReel.title }}
-            </h2>
+            <span class="eyebrow">YOUR AI RESULT</span>
+            <h2>{{ generatedReel.title }}</h2>
           </div>
 
           <button
             type="button"
+            class="btn-secondary copy-btn"
             (click)="copyScript()"
-            class="rounded-lg border border-slate-700 px-3 py-2 text-sm text-white hover:border-emerald-400"
           >
-            Copy script
+            <span>▣</span> Copy script
           </button>
         </div>
 
-        <div class="space-y-5">
-          <div>
-            <h3 class="mb-2 font-semibold text-emerald-400">The hook</h3>
-            <p class="text-slate-200">{{ generatedReel.hook }}</p>
-          </div>
+        <div class="result-content">
+          <article class="result-section hook-section">
+            <span class="result-label">
+              <span class="result-number">01</span>
+              THE HOOK
+            </span>
+            <p class="hook-text">{{ generatedReel.hook }}</p>
+          </article>
 
-          <div>
-            <h3 class="mb-2 font-semibold text-emerald-400">
-              Full script
-            </h3>
-            <p class="whitespace-pre-wrap leading-7 text-slate-300">
-              {{ generatedReel.script }}
-            </p>
-          </div>
+          <article class="result-section">
+            <span class="result-label">
+              <span class="result-number">02</span>
+              FULL SCRIPT
+            </span>
+            <p class="script-text">{{ generatedReel.script }}</p>
+          </article>
 
-          <div>
-            <h3 class="mb-3 font-semibold text-emerald-400">
-              Scene breakdown
-            </h3>
+          <article class="result-section">
+            <span class="result-label">
+              <span class="result-number">03</span>
+              SCENE BREAKDOWN
+            </span>
 
             <div
               *ngFor="let scene of generatedReel.scenes"
-              class="mb-3 rounded-xl border border-slate-700 p-4"
+              class="scene-card"
             >
-              <div class="flex justify-between gap-3">
-                <h4 class="font-medium text-white">
-                  Scene {{ scene.sceneNumber }}
-                </h4>
-                <span class="text-sm text-slate-400">
-                  {{ scene.duration }} sec
-                </span>
+              <div class="scene-header">
+                <h3>Scene {{ scene.sceneNumber }}</h3>
+                <span class="scene-duration">{{ scene.duration }} sec</span>
               </div>
 
-              <p class="mt-3 text-sm text-slate-300">
-                <span class="font-medium text-white">Visual:</span>
-                {{ scene.visual }}
-              </p>
+              <div class="scene-detail">
+                <span>Visual</span>
+                <p>{{ scene.visual }}</p>
+              </div>
 
-              <p class="mt-2 text-sm text-slate-300">
-                <span class="font-medium text-white">Narration:</span>
-                {{ scene.narration }}
-              </p>
+              <div class="scene-detail">
+                <span>Narration</span>
+                <p>{{ scene.narration }}</p>
+              </div>
 
-              <p class="mt-2 text-sm text-emerald-300">
+              <div class="onscreen-text">
                 {{ scene.onScreenText }}
-              </p>
+              </div>
             </div>
-          </div>
+          </article>
 
-          <div>
-            <h3 class="mb-2 font-semibold text-emerald-400">
-              Hashtags
-            </h3>
-            <div class="flex flex-wrap gap-2">
-              <span
-                *ngFor="let hashtag of generatedReel.hashtags"
-                class="rounded-full bg-slate-800 px-3 py-1 text-sm text-slate-300"
-              >
+          <article class="result-section">
+            <span class="result-label">
+              <span class="result-number">04</span>
+              HASHTAGS
+            </span>
+
+            <div class="hashtag-list">
+              <span *ngFor="let hashtag of generatedReel.hashtags">
                 {{ hashtag }}
               </span>
             </div>
-          </div>
-
-          <button
-            type="button"
-            (click)="resetForm()"
-            class="w-full rounded-xl border border-slate-700 px-4 py-3 font-medium text-white hover:border-emerald-400"
-          >
-            Create another reel
-          </button>
+          </article>
         </div>
+
+        <button
+          type="button"
+          class="btn-secondary reset-btn"
+          (click)="resetForm()"
+        >
+          + Create another reel
+        </button>
       </ng-container>
 
       <ng-template #emptyState>
-        <div class="flex min-h-80 flex-col items-center justify-center text-center">
-          <div class="mb-4 rounded-2xl bg-slate-800 p-4 text-3xl">
-            ✨
+        <div class="empty-state">
+          <div class="empty-art">
+            <div class="empty-art-inner">▶</div>
+            <span class="art-spark spark-one">✦</span>
+            <span class="art-spark spark-two">✧</span>
           </div>
-          <h2 class="text-xl font-semibold text-white">
-            Your next reel starts here
-          </h2>
-          <p class="mt-2 max-w-sm text-sm leading-6 text-slate-400">
-            Enter an idea and generate your hook, script, captions,
-            and scene breakdown with your local AI model.
+
+          <span class="eyebrow">YOUR CREATIVE WORKSPACE</span>
+          <h2>Your next reel starts here</h2>
+          <p>
+            Add your idea and let AI build the hook, script,
+            and scene-by-scene breakdown for your next video.
           </p>
+
+          <div class="feature-list">
+            <span><b>✓</b> Attention-grabbing hooks</span>
+            <span><b>✓</b> Ready-to-use scripts</span>
+            <span><b>✓</b> Scene and visual guidance</span>
+          </div>
         </div>
       </ng-template>
-
-    </div>
+    </section>
   </div>
 </section>
