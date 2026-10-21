@@ -1,1 +1,24 @@
-<router-outlet />
+<div class="app-shell">
+  @if (menuOpen) {
+    <button
+      class="mobile-overlay"
+      type="button"
+      aria-label="Close navigation"
+      (click)="closeMenu()">
+    </button>
+  }
+
+  <aside
+    class="sidebar-container"
+    [class.sidebar-open]="menuOpen">
+    <app-sidebar (navigate)="closeMenu()" />
+  </aside>
+
+  <div class="main-area">
+    <app-header (menuToggle)="toggleMenu()" />
+
+    <main class="page-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
