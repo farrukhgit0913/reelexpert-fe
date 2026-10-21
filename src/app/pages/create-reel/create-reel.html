@@ -1,4 +1,3 @@
-
 <section class="create-page">
   <header class="page-heading">
     <div>
@@ -36,16 +35,38 @@
           rows="4"
           maxlength="2000"
           placeholder="Example: 5 AI tools that save developers hours every week..."
+          [attr.aria-invalid]="
+            reelForm.controls.topic.touched &&
+            reelForm.controls.topic.invalid
+          "
+          aria-describedby="topic-error"
         ></textarea>
 
         <div class="field-footer">
           <p
-            *ngIf="reelForm.controls.topic.touched && reelForm.controls.topic.invalid"
+            id="topic-error"
+            *ngIf="
+              reelForm.controls.topic.touched &&
+              reelForm.controls.topic.hasError('required')
+            "
             class="field-error"
           >
             Please enter a topic.
           </p>
-          <span class="field-hint">Describe your idea in a few words.</span>
+
+          <p
+            *ngIf="
+              reelForm.controls.topic.touched &&
+              reelForm.controls.topic.hasError('maxlength')
+            "
+            class="field-error"
+          >
+            Your topic must be no longer than 2,000 characters.
+          </p>
+
+          <span class="field-hint">
+            {{ reelForm.controls.topic.value.length }}/2000 characters
+          </span>
         </div>
       </div>
 
@@ -55,6 +76,7 @@
           id="audience"
           type="text"
           formControlName="audience"
+          maxlength="200"
           placeholder="Young entrepreneurs"
         />
       </div>
@@ -105,7 +127,12 @@
         </div>
       </div>
 
-      <div *ngIf="errorMessage" class="error-banner">
+      <div
+        *ngIf="errorMessage"
+        class="error-banner"
+        role="alert"
+        aria-live="polite"
+      >
         <span>!</span>
         <p>{{ errorMessage }}</p>
       </div>
@@ -115,9 +142,14 @@
         class="btn-primary generate-btn"
         [disabled]="loading"
       >
-        <span *ngIf="!loading">✦</span>
+        <span *ngIf="!loading" aria-hidden="true">✦</span>
+        <span *ngIf="loading" class="loading-spinner" aria-hidden="true"></span>
+
         {{ loading ? 'Generating your reel...' : 'Generate with AI' }}
-        <span *ngIf="!loading" class="button-arrow">→</span>
+
+        <span *ngIf="!loading" class="button-arrow" aria-hidden="true">
+          →
+        </span>
       </button>
 
       <p class="form-note">
@@ -126,20 +158,26 @@
     </form>
 
     <!-- Generated content -->
-    <section class="panel result-card">
-      <ng-container *ngIf="generatedReel; else emptyState">
+    <section
+      class="panel result-card"
+      aria-live="polite"
+      aria-busy="{{ loading }}"
+    >
+      <ng-container *ngIf="generatedReel as reel; else emptyState">
         <div class="result-header">
           <div>
             <span class="eyebrow">YOUR AI RESULT</span>
-            <h2>{{ generatedReel.title }}</h2>
+            <h2>{{ reel.title }}</h2>
           </div>
 
           <button
             type="button"
             class="btn-secondary copy-btn"
             (click)="copyScript()"
+            [disabled]="!getScriptToCopy()"
           >
-            <span>▣</span> Copy script
+            <span aria-hidden="true">{{ copied ? '✓' : '▣' }}</span>
+            {{ copied ? 'Copied!' : 'Copy script' }}
           </button>
         </div>
 
@@ -149,7 +187,7 @@
               <span class="result-number">01</span>
               THE HOOK
             </span>
-            <p class="hook-text">{{ generatedReel.hook }}</p>
+            <p class="hook-text">{{ reel.hook }}</p>
           </article>
 
           <article class="result-section">
@@ -157,7 +195,7 @@
               <span class="result-number">02</span>
               FULL SCRIPT
             </span>
-            <p class="script-text">{{ generatedReel.script }}</p>
+            <p class="script-text">{{ reel.script || reel.voiceover }}</p>
           </article>
 
           <article class="result-section">
@@ -167,12 +205,14 @@
             </span>
 
             <div
-              *ngFor="let scene of generatedReel.scenes"
+              *ngFor="let scene of reel.scenes; let i = index"
               class="scene-card"
             >
               <div class="scene-header">
-                <h3>Scene {{ scene.sceneNumber }}</h3>
-                <span class="scene-duration">{{ scene.duration }} sec</span>
+                <h3>Scene {{ scene.sceneNumber || i + 1 }}</h3>
+                <span class="scene-duration">
+                  {{ scene.duration }} sec
+                </span>
               </div>
 
               <div class="scene-detail">
@@ -185,10 +225,20 @@
                 <p>{{ scene.narration }}</p>
               </div>
 
-              <div class="onscreen-text">
+              <div
+                *ngIf="scene.onScreenText"
+                class="onscreen-text"
+              >
                 {{ scene.onScreenText }}
               </div>
             </div>
+
+            <p
+              *ngIf="!reel.scenes?.length"
+              class="field-hint"
+            >
+              No scene breakdown was returned for this reel.
+            </p>
           </article>
 
           <article class="result-section">
@@ -198,10 +248,17 @@
             </span>
 
             <div class="hashtag-list">
-              <span *ngFor="let hashtag of generatedReel.hashtags">
+              <span *ngFor="let hashtag of reel.hashtags">
                 {{ hashtag }}
               </span>
             </div>
+
+            <p
+              *ngIf="!reel.hashtags?.length"
+              class="field-hint"
+            >
+              No hashtags were returned for this reel.
+            </p>
           </article>
         </div>
 
