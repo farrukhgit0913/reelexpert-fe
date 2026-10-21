@@ -2,74 +2,132 @@
   <a
     class="brand"
     routerLink="/dashboard"
-    (click)="navigate.emit()">
-    <span class="brand-icon">R</span>
-    <span>ReelExpert <strong>AI</strong></span>
+    (click)="navigate.emit()"
+    aria-label="ReelExpert AI home"
+  >
+    <span class="brand-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M7 4.5H15.5C18 4.5 20 6.5 20 9S18 13.5 15.5 13.5H7V4.5Z"
+          stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+        <path d="M7 13.5V20M7 13.5L13 20"
+          stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M4 3.5L4.7 5.3L6.5 6L4.7 6.7L4 8.5L3.3 6.7L1.5 6L3.3 5.3L4 3.5Z"
+          fill="currentColor"/>
+      </svg>
+    </span>
+    <span class="brand-name">ReelExpert <strong>AI</strong></span>
   </a>
 
   <p class="section-label">WORKSPACE</p>
 
-  <nav class="navigation">
+  <nav class="navigation" aria-label="Workspace navigation">
     <a
       routerLink="/dashboard"
       routerLinkActive="active"
       [routerLinkActiveOptions]="{ exact: true }"
-      (click)="navigate.emit()">
-      <span class="nav-icon">⌂</span>
-      <span>Dashboard</span>
+      (click)="navigate.emit()"
+    >
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M3.5 10.5L12 3.5L20.5 10.5V20H14.5V14H9.5V20H3.5V10.5Z"
+          stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Overview</span>
     </a>
 
     <a
       routerLink="/create"
       routerLinkActive="active"
-      (click)="navigate.emit()">
-      <span class="nav-icon">✦</span>
-      <span>Create Reel</span>
+      (click)="navigate.emit()"
+    >
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 3L14.3 9.7L21 12L14.3 14.3L12 21L9.7 14.3L3 12L9.7 9.7L12 3Z"
+          stroke="currentColor" stroke-width="1.8"
+          stroke-linejoin="round"/>
+      </svg>
+      <span>AI Reel Studio</span>
+      <span class="nav-badge">AI</span>
     </a>
 
     <a
       routerLink="/reels"
       routerLinkActive="active"
-      (click)="navigate.emit()">
-      <span class="nav-icon">▣</span>
-      <span>My Reels</span>
+      (click)="navigate.emit()"
+    >
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3.5" y="4" width="17" height="16" rx="3"
+          stroke="currentColor" stroke-width="1.8"/>
+        <path d="M10 8.5L15.5 12L10 15.5V8.5Z"
+          stroke="currentColor" stroke-width="1.8"
+          stroke-linejoin="round"/>
+      </svg>
+      <span>Reel Library</span>
     </a>
 
     <a
       routerLink="/analytics"
       routerLinkActive="active"
-      (click)="navigate.emit()">
-      <span class="nav-icon">▥</span>
-      <span>Analytics</span>
+      (click)="navigate.emit()"
+    >
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 19V13M10 19V5M16 19V9M22 19V3"
+          stroke="currentColor" stroke-width="2"
+          stroke-linecap="round"/>
+      </svg>
+      <span>Performance</span>
     </a>
   </nav>
 
   <p class="section-label preferences-label">PREFERENCES</p>
 
-  <nav class="navigation">
+  <nav class="navigation" aria-label="Preferences navigation">
     <a
       routerLink="/settings"
       routerLinkActive="active"
-      (click)="navigate.emit()">
-      <span class="nav-icon">⚙</span>
+      (click)="navigate.emit()"
+    >
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"
+          stroke="currentColor" stroke-width="1.8"/>
+        <path d="M19.4 15A1.7 1.7 0 0 0 19.7 17L19.8 17.1L17.1 19.8L17 19.7A1.7 1.7 0 0 0 15 19.4A1.7 1.7 0 0 0 14 21V21.2H10V21A1.7 1.7 0 0 0 9 19.4A1.7 1.7 0 0 0 7 19.7L6.9 19.8L4.2 17.1L4.3 17A1.7 1.7 0 0 0 4.6 15A1.7 1.7 0 0 0 3 14H2.8V10H3A1.7 1.7 0 0 0 4.6 9A1.7 1.7 0 0 0 4.3 7L4.2 6.9L6.9 4.2L7 4.3A1.7 1.7 0 0 0 9 4.6A1.7 1.7 0 0 0 10 3V2.8H14V3A1.7 1.7 0 0 0 15 4.6A1.7 1.7 0 0 0 17 4.3L17.1 4.2L19.8 6.9L19.7 7A1.7 1.7 0 0 0 19.4 9A1.7 1.7 0 0 0 21 10H21.2V14H21A1.7 1.7 0 0 0 19.4 15Z"
+          stroke="currentColor" stroke-width="1.5"
+          stroke-linejoin="round"/>
+      </svg>
       <span>Settings</span>
     </a>
   </nav>
 
   <div class="sidebar-footer">
     <div class="upgrade-card">
-      <span class="upgrade-label">CREATE MORE</span>
-      <strong>Bring your ideas to life</strong>
-      <p>Turn your ideas into engaging short videos with AI.</p>
-      <a routerLink="/create" (click)="navigate.emit()">Create a reel →</a>
+      <div class="upgrade-heading">
+        <span class="upgrade-label">CREATE WITH AI</span>
+        <span class="upgrade-sparkle" aria-hidden="true">✦</span>
+      </div>
+
+      <strong>Ideas into videos.</strong>
+      <p>Create engaging short-form content with AI-powered tools.</p>
+
+      <a routerLink="/create" (click)="navigate.emit()">
+        Create a reel
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 12H19M12 5L19 12L12 19"
+            stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
     </div>
 
-    <div class="profile">
-      <div class="profile-avatar">FS</div>
+    <div class="profile" tabindex="0" role="button" aria-label="User profile">
+      <div class="profile-avatar" aria-hidden="true">FS</div>
       <div class="profile-details">
         <strong>Farrukh Shahzad</strong>
         <p>Creator account</p>
       </div>
+      <svg class="profile-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M9 18L15 12L9 6"
+          stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     </div>
   </div>
 </aside>
