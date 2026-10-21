@@ -1,1 +1,42 @@
-<p>reels works!</p>
+<div class="page-heading">
+      <div><span class="eyebrow">CONTENT LIBRARY</span><h1>My Reels</h1>
+        <p>Manage and organize your short-form content.</p></div>
+      <a href="/create" class="btn-primary">＋ Create reel</a>
+    </div>
+
+    <div class="library-toolbar">
+      <input class="search-input" placeholder="⌕  Search your reels..." [value]="search"
+        (input)="search = $any($event.target).value" />
+      <select class="filter-select" [value]="filter"
+        (change)="filter = $any($event.target).value">
+        <option value="All">All statuses</option>
+        <option value="Published">Published</option>
+        <option value="Processing">Processing</option>
+        <option value="Draft">Draft</option>
+      </select>
+    </div>
+
+    <div class="reels-grid">
+      @for (reel of filteredReels; track reel.title) {
+        <article class="reel-card">
+          <div class="reel-cover" [class.thumb-blue]="reel.color === 'blue'"
+            [class.thumb-orange]="reel.color === 'orange'"
+            [class.thumb-green]="reel.color === 'green'">
+            <span class="cover-symbol">✦</span><span class="cover-play">▶</span>
+            <span class="cover-duration">{{ reel.duration }}</span>
+          </div>
+          <div class="reel-card-body">
+            <span class="status-pill" [class.pill-green]="reel.status === 'Published'"
+              [class.pill-yellow]="reel.status === 'Processing'"
+              [class.pill-gray]="reel.status === 'Draft'">{{ reel.status }}</span>
+            <h3>{{ reel.title }}</h3>
+            <p>{{ reel.category }}</p>
+            <div class="reel-card-footer"><span>◉ {{ reel.views }} views</span><span>{{ reel.date }}</span></div>
+          </div>
+        </article>
+      } @empty {
+        <div class="empty-state"><span>▣</span><h3>No reels found</h3>
+          <p>Try another search or status filter.</p></div>
+      }
+    </div>
+    <p class="demo-note">Sample content · Connect your reels API to load real videos.</p>

@@ -5,32 +5,32 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     loadComponent: () =>
-      import('./pages/dashboard/dashboard.component')
-        .then(m => m.DashboardComponent)
+      import('./pages/dashboard/dashboard')
+        .then(m => m.Dashboard)
   },
   {
-    path: 'create',
-    loadComponent: () =>
-      import('./pages/create-reel/create-reel.component')
-        .then(m => m.CreateReelComponent)
+  path: 'create',
+  loadComponent: () =>
+    import('./pages/create-reel/create-reel')
+      .then(m => m.CreateReel)
   },
   {
     path: 'reels',
     loadComponent: () =>
-      import('./pages/reels/reels.component')
-        .then(m => m.ReelsComponent)
+      import('./pages/reels/reels')
+        .then(m => m.Reels)
   },
   {
     path: 'analytics',
     loadComponent: () =>
-      import('./pages/analytics/analytics.component')
-        .then(m => m.AnalyticsComponent)
+      import('./pages/analytics/analytics')
+        .then(m => m.Analytics)
   },
   {
     path: 'settings',
     loadComponent: () =>
-      import('./pages/settings/settings.component')
-        .then(m => m.SettingsComponent)
+      import('./pages/settings/settings')
+        .then(m => m.Settings)
   },
   {
     path: '',
