@@ -128,26 +128,31 @@
       </div>
 
       <div
-        *ngIf="errorMessage"
+        *ngIf="errorMessage()"
         class="error-banner"
         role="alert"
         aria-live="polite"
       >
         <span>!</span>
-        <p>{{ errorMessage }}</p>
+        <p>{{ errorMessage() }}</p>
       </div>
 
       <button
         type="submit"
         class="btn-primary generate-btn"
-        [disabled]="loading"
+        [disabled]="loading()"
       >
-        <span *ngIf="!loading" aria-hidden="true">✦</span>
-        <span *ngIf="loading" class="loading-spinner" aria-hidden="true"></span>
+        <span *ngIf="!loading()" aria-hidden="true">✦</span>
 
-        {{ loading ? 'Generating your reel...' : 'Generate with AI' }}
+        <span
+          *ngIf="loading()"
+          class="loading-spinner"
+          aria-hidden="true"
+        ></span>
 
-        <span *ngIf="!loading" class="button-arrow" aria-hidden="true">
+        {{ loading() ? 'Generating your reel...' : 'Generate with AI' }}
+
+        <span *ngIf="!loading()" class="button-arrow" aria-hidden="true">
           →
         </span>
       </button>
@@ -161,9 +166,9 @@
     <section
       class="panel result-card"
       aria-live="polite"
-      [attr.aria-busy]="loading"
+      [attr.aria-busy]="loading()"
     >
-      <ng-container *ngIf="generatedReel as reel; else emptyState">
+      <ng-container *ngIf="generatedReel() as reel; else emptyState">
         <div class="result-header">
           <div>
             <span class="eyebrow">YOUR AI RESULT</span>
@@ -176,12 +181,15 @@
             (click)="copyScript()"
             [disabled]="!getScriptToCopy()"
           >
-            <span aria-hidden="true">{{ copied ? '✓' : '▣' }}</span>
-            {{ copied ? 'Copied!' : 'Copy script' }}
+            <span aria-hidden="true">
+              {{ copied() ? '✓' : '▣' }}
+            </span>
+            {{ copied() ? 'Copied!' : 'Copy script' }}
           </button>
         </div>
 
         <div class="result-content">
+          <!-- Hook -->
           <article class="result-section hook-section">
             <span class="result-label">
               <span class="result-number">01</span>
@@ -190,14 +198,31 @@
             <p class="hook-text">{{ reel.hook }}</p>
           </article>
 
+          <!-- Script -->
           <article class="result-section">
             <span class="result-label">
               <span class="result-number">02</span>
               FULL SCRIPT
             </span>
-            <p class="script-text">{{ reel.script || reel.voiceover }}</p>
+
+            <p
+              class="script-text"
+              *ngIf="reel.script || reel.voiceover"
+            >
+              {{ reel.script || reel.voiceover }}
+            </p>
+
+            <div
+              class="script-text"
+              *ngIf="!reel.script && !reel.voiceover"
+            >
+              <p *ngFor="let scene of reel.scenes">
+                {{ scene.voiceover || scene.narration }}
+              </p>
+            </div>
           </article>
 
+          <!-- Scene breakdown -->
           <article class="result-section">
             <span class="result-label">
               <span class="result-number">03</span>
@@ -222,25 +247,23 @@
 
               <div class="scene-detail">
                 <span>Narration</span>
-                <p>{{ scene.narration }}</p>
+                <p>{{ scene.voiceover || scene.narration }}</p>
               </div>
 
               <div
-                *ngIf="scene.onScreenText"
+                *ngIf="scene.textOverlay || scene.onScreenText"
                 class="onscreen-text"
               >
-                {{ scene.onScreenText }}
+                {{ scene.textOverlay || scene.onScreenText }}
               </div>
             </div>
 
-            <p
-              *ngIf="!reel.scenes?.length"
-              class="field-hint"
-            >
+            <p *ngIf="!reel.scenes?.length" class="field-hint">
               No scene breakdown was returned for this reel.
             </p>
           </article>
 
+          <!-- Hashtags -->
           <article class="result-section">
             <span class="result-label">
               <span class="result-number">04</span>
@@ -253,81 +276,115 @@
               </span>
             </div>
 
-            <p
-              *ngIf="!reel.hashtags?.length"
-              class="field-hint"
-            >
+            <p *ngIf="!reel.hashtags?.length" class="field-hint">
               No hashtags were returned for this reel.
             </p>
           </article>
+
+          <!-- Video creation -->
+          <article class="result-section video-creation-section">
+            <span class="result-label">
+              <span class="result-number">05</span>
+              CREATE YOUR VIDEO
+            </span>
+
+            <p>
+              Choose background footage, generate narration, and render your
+              vertical video.
+            </p>
+
+            <div class="form-field">
+              <label for="stock-footage">Background footage</label>
+
+              <select
+                id="stock-footage"
+                name="stockFootage"
+                [ngModel]="selectedFootage()"
+                (ngModelChange)="selectedFootage.set($event)"
+              >
+                <option value="">Select footage</option>
+
+                <option
+                  *ngFor="let footage of availableFootage()"
+                  [value]="footage"
+                >
+                  {{ footage }}
+                </option>
+              </select>
+
+              <p
+                class="field-hint"
+                *ngIf="availableFootage().length === 0"
+              >
+                No footage found. Check that the backend contains video files
+                in assets/stock-footage and that the footage API is running.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              class="btn-primary generate-btn"
+              [disabled]="
+                narrationLoading() ||
+                renderLoading() ||
+                !selectedFootage()
+              "
+              (click)="generateNarrationAndRender()"
+            >
+              <span
+                *ngIf="narrationLoading() || renderLoading()"
+                class="loading-spinner"
+                aria-hidden="true"
+              ></span>
+
+              {{
+                narrationLoading()
+                  ? 'Generating narration...'
+                  : renderLoading()
+                    ? 'Rendering video...'
+                    : 'Generate video'
+              }}
+            </button>
+
+            <p
+              *ngIf="workflowMessage()"
+              aria-live="polite"
+              class="workflow-message"
+            >
+              {{ workflowMessage() }}
+            </p>
+
+            <!-- Narration audio -->
+            <div *ngIf="audioUrl()" class="audio-preview">
+              <h3>Generated narration</h3>
+              <audio
+                [src]="audioUrl()"
+                controls
+                preload="metadata"
+              ></audio>
+            </div>
+
+            <!-- Finished video -->
+            <div *ngIf="videoUrl()" class="video-preview">
+              <h3>Your finished reel</h3>
+
+              <video
+                [src]="videoUrl()"
+                controls
+                playsinline
+                preload="metadata"
+              ></video>
+
+              <a
+                [href]="videoUrl()"
+                download="reelexpert-reel.mp4"
+                class="btn-secondary"
+              >
+                Download reel
+              </a>
+            </div>
+          </article>
         </div>
-
-
-<div class="result-section video-creation-section">
-  <span class="result-label">
-    <span class="result-number">05</span>
-    CREATE YOUR VIDEO
-  </span>
-
-  <div class="form-field">
-    <label for="stock-footage">Background footage</label>
-
-    <select
-      id="stock-footage"
-      [(ngModel)]="selectedFootage"
-    >
-      <option value="" disabled>Select footage</option>
-      <option
-        *ngFor="let footage of availableFootage"
-        [value]="footage"
-      >
-        {{ footage }}
-      </option>
-    </select>
-  </div>
-
-  <button
-    type="button"
-    class="btn-primary generate-btn"
-    [disabled]="narrationLoading || renderLoading || !selectedFootage"
-    (click)="generateNarrationAndRender()"
-  >
-    {{
-      narrationLoading
-        ? 'Generating narration...'
-        : renderLoading
-          ? 'Rendering video...'
-          : 'Generate video'
-    }}
-  </button>
-
-  <p *ngIf="workflowMessage" aria-live="polite">
-    {{ workflowMessage }}
-  </p>
-
-  <audio
-    *ngIf="audioUrl"
-    [src]="audioUrl"
-    controls
-    preload="metadata"
-  ></audio>
-
-  <div *ngIf="videoUrl" class="video-preview">
-    <h3>Your finished reel</h3>
-
-    <video
-      [src]="videoUrl"
-      controls
-      playsinline
-      preload="metadata"
-    ></video>
-
-    <a [href]="videoUrl" download="reelexpert-reel.mp4">
-      Download reel
-    </a>
-  </div>
-</div>
-
 
         <button
           type="button"
@@ -338,6 +395,7 @@
         </button>
       </ng-container>
 
+      <!-- Empty state -->
       <ng-template #emptyState>
         <div class="empty-state">
           <div class="empty-art">
@@ -348,9 +406,10 @@
 
           <span class="eyebrow">YOUR CREATIVE WORKSPACE</span>
           <h2>Your next reel starts here</h2>
+
           <p>
-            Add your idea and let AI build the hook, script,
-            and scene-by-scene breakdown for your next video.
+            Add your idea and let AI build the hook, script, and
+            scene-by-scene breakdown for your next video.
           </p>
 
           <div class="feature-list">

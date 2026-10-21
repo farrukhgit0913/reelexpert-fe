@@ -1,4 +1,3 @@
-
 import { Injectable, inject } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
@@ -7,18 +6,22 @@ export interface ReelScene {
   sceneNumber: number;
   duration: number;
   visual: string;
-  narration: string;
-  onScreenText: string;
+  narration?: string;
+  voiceover?: string;
+  textOverlay?: string;
+  onScreenText?: string;
 }
 
 export interface GeneratedReel {
   title: string;
   hook: string;
-  script: string;
-  voiceover: string;
-  captions: string[];
+  description?: string;
+  script?: string;
+  voiceover?: string;
+  captions?: string[];
   scenes: ReelScene[];
   hashtags: string[];
+  callToAction?: string;
   status?: string;
   createdAt?: string;
 }
@@ -36,6 +39,7 @@ export interface GenerateReelResponse {
   success: boolean;
   reel: GeneratedReel;
   message?: string;
+  error?: string;
 }
 
 export interface TtsResponse {
@@ -90,10 +94,10 @@ export class ReelService {
     text: string,
     voice = "Samantha",
   ): Observable<TtsResponse> {
-    return this.http.post<TtsResponse>(`${this.apiUrl}/tts`, {
-      text,
-      voice,
-    });
+    return this.http.post<TtsResponse>(
+      `${this.apiUrl}/tts`,
+      { text, voice },
+    );
   }
 
   getFootage(): Observable<FootageResponse> {
