@@ -1,3 +1,4 @@
+
 import { Injectable, inject } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
@@ -10,6 +11,15 @@ export interface ReelScene {
   voiceover?: string;
   textOverlay?: string;
   onScreenText?: string;
+  speaker?: string;
+  dialogue?: string;
+}
+
+export interface ReelCharacter {
+  name: string;
+  appearance: string;
+  personality: string;
+  voiceDescription: string;
 }
 
 export interface GeneratedReel {
@@ -24,6 +34,8 @@ export interface GeneratedReel {
   callToAction?: string;
   status?: string;
   createdAt?: string;
+  mode?: "standard" | "cartoon";
+  characters?: ReelCharacter[];
 }
 
 export interface GenerateReelRequest {
@@ -33,6 +45,7 @@ export interface GenerateReelRequest {
   language: string;
   duration: number;
   style: string;
+  mode: "standard" | "cartoon";
 }
 
 export interface GenerateReelResponse {
@@ -60,6 +73,20 @@ export interface FootageResponse {
   error?: string;
 }
 
+export interface CartoonSceneImage {
+  sceneNumber: number;
+  filename: string;
+  path: string;
+  prompt: string;
+}
+
+export interface CartoonScenesResponse {
+  success: boolean;
+  count: number;
+  scenes: CartoonSceneImage[];
+  error?: string;
+}
+
 export interface RenderResponse {
   success: boolean;
   message?: string;
@@ -70,6 +97,9 @@ export interface RenderResponse {
     format: string;
     width: number;
     height: number;
+    durationSeconds?: number;
+    scenes?: number;
+    mode?: "standard" | "cartoon";
     sizeBytes: number;
   };
 }
@@ -106,6 +136,16 @@ export class ReelService {
     );
   }
 
+  generateCartoonScenes(
+    scenes: Array<{ sceneNumber: number; visual: string }>,
+    characters: ReelCharacter[] = [],
+  ): Observable<CartoonScenesResponse> {
+    return this.http.post<CartoonScenesResponse>(
+      `${this.apiUrl}/cartoon/scenes`,
+      { scenes, characters },
+    );
+  }
+
   renderReel(
     videoFilename: string,
     audioFilename: string,
@@ -113,6 +153,19 @@ export class ReelService {
     return this.http.post<RenderResponse>(
       `${this.apiUrl}/render`,
       { videoFilename, audioFilename },
+    );
+  }
+
+  renderCartoonReel(
+    audioFilename: string,
+    cartoonSceneFilenames: string[],
+  ): Observable<RenderResponse> {
+    return this.http.post<RenderResponse>(
+      `${this.apiUrl}/render`,
+      {
+        audioFilename,
+        cartoonSceneFilenames,
+      },
     );
   }
 

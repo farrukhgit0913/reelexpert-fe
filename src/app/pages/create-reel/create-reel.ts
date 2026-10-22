@@ -8,7 +8,12 @@ import {
 } from "@angular/forms";
 import { finalize, timeout } from "rxjs";
 
-import { GeneratedReel, ReelService } from "../../services/reel";
+import {
+  GeneratedReel,
+  ReelCharacter,
+  ReelScene,
+  ReelService,
+} from "../../services/reel";
 
 @Component({
   selector: "app-create-reel",
@@ -21,7 +26,6 @@ export class CreateReel implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly reelService = inject(ReelService);
 
-  // Reactive UI state
   readonly loading = signal(false);
   readonly errorMessage = signal("");
   readonly generatedReel = signal<GeneratedReel | null>(null);
@@ -47,6 +51,7 @@ export class CreateReel implements OnInit {
     language: ["English", Validators.required],
     duration: [30, Validators.required],
     style: ["Engaging", Validators.required],
+    mode: ["standard" as "standard" | "cartoon", Validators.required],
   });
 
   ngOnInit(): void {
@@ -102,9 +107,7 @@ export class CreateReel implements OnInit {
     this.copied.set(false);
     this.audioUrl.set("");
     this.videoUrl.set("");
-    this.workflowMessage.set("Generating your reel...");
-
-    console.log("[ReelExpert] Sending script request");
+    this.workflowMessage.set("Generating your reel script...");
 
     this.reelService
       .generateScript(this.reelForm.getRawValue())
@@ -112,16 +115,10 @@ export class CreateReel implements OnInit {
         timeout(120000),
         finalize(() => {
           this.loading.set(false);
-          console.log(
-            "[ReelExpert] Request finished; loading =",
-            this.loading(),
-          );
         }),
       )
       .subscribe({
         next: (response) => {
-          console.log("[ReelExpert] API response:", response);
-
           if (!response?.success || !response?.reel) {
             this.errorMessage.set(
               response?.error ||
@@ -134,18 +131,12 @@ export class CreateReel implements OnInit {
 
           this.generatedReel.set(response.reel);
           this.workflowMessage.set(
-            "Script generated successfully. Your result should appear below.",
-          );
-
-          console.log(
-            "[ReelExpert] Reel assigned:",
-            this.generatedReel(),
+            "Script generated successfully. Review it below, then create your reel.",
           );
         },
         error: (error) => {
           console.error("[ReelExpert] Script request failed:", error);
 
-          this.loading.set(false);
           this.workflowMessage.set("");
           this.errorMessage.set(
             error?.error?.error ||
@@ -161,13 +152,17 @@ export class CreateReel implements OnInit {
   getScriptToCopy(): string {
     const reel = this.generatedReel();
 
-    if (!reel) {
-      return "";
-    }
+    if (!reel) return "";
 
     const sceneNarration =
       reel.scenes
-        ?.map((scene) => scene.voiceover || scene.narration || "")
+        ?.map(
+          (scene) =>
+            scene.voiceover ||
+            scene.narration ||
+            scene.dialogue ||
+            "",
+        )
         .filter((text) => text.trim().length > 0)
         .join("\n\n") ?? "";
 
@@ -200,16 +195,20 @@ export class CreateReel implements OnInit {
   }
 
   generateNarrationAndRender(): void {
+    const reel = this.generatedReel();
     const narration = this.getScriptToCopy();
 
-    if (!this.generatedReel() || !narration) {
+    if (!reel || !narration) {
       this.errorMessage.set(
         "Generate a script before creating the video.",
       );
       return;
     }
 
-    if (!this.selectedFootage()) {
+    // Use the selected form mode if the script API doesn't return one.
+    const mode = reel.mode ?? this.reelForm.controls.mode.value;
+
+    if (mode === "standard" && !this.selectedFootage()) {
       this.errorMessage.set("Select a stock video first.");
       return;
     }
@@ -221,8 +220,8 @@ export class CreateReel implements OnInit {
     this.errorMessage.set("");
     this.audioUrl.set("");
     this.videoUrl.set("");
-    this.workflowMessage.set("Generating narration...");
     this.narrationLoading.set(true);
+    this.workflowMessage.set("Generating narration...");
 
     this.reelService
       .generateNarration(narration)
@@ -242,54 +241,20 @@ export class CreateReel implements OnInit {
             return;
           }
 
+          const audioFilename = audioResponse.audio.filename;
+
           this.audioUrl.set(
             this.reelService.getAssetUrl(audioResponse.audio.url),
           );
 
-          this.workflowMessage.set("Rendering your vertical reel...");
-          this.renderLoading.set(true);
-
-          this.reelService
-            .renderReel(
-              this.selectedFootage(),
-              audioResponse.audio.filename,
-            )
-            .pipe(
-              timeout(120000),
-              finalize(() => {
-                this.renderLoading.set(false);
-              }),
-            )
-            .subscribe({
-              next: (renderResponse) => {
-                if (!renderResponse?.success || !renderResponse.video) {
-                  this.workflowMessage.set("");
-                  this.errorMessage.set(
-                    renderResponse?.error || "Video rendering failed.",
-                  );
-                  return;
-                }
-
-                this.videoUrl.set(
-                  this.reelService.getAssetUrl(
-                    renderResponse.video.url,
-                  ),
-                );
-
-                this.workflowMessage.set(
-                  "Your reel is ready to preview and download.",
-                );
-              },
-              error: (error) => {
-                this.workflowMessage.set("");
-                this.errorMessage.set(
-                  error?.error?.error ||
-                    (error?.name === "TimeoutError"
-                      ? "Video rendering timed out. Check the backend terminal."
-                      : "Video rendering failed. Check FFmpeg and stock footage."),
-                );
-              },
-            });
+          if (mode === "cartoon") {
+            this.generateCartoonImagesAndRender(
+              reel,
+              audioFilename,
+            );
+          } else {
+            this.renderStandardReel(audioFilename);
+          }
         },
         error: (error) => {
           this.workflowMessage.set("");
@@ -301,6 +266,165 @@ export class CreateReel implements OnInit {
           );
         },
       });
+  }
+
+  private generateCartoonImagesAndRender(
+    reel: GeneratedReel,
+    audioFilename: string,
+  ): void {
+    const scenes = (reel.scenes ?? [])
+      .filter((scene) => scene.visual?.trim())
+      .map((scene) => ({
+        sceneNumber: scene.sceneNumber,
+        visual: this.buildScenePrompt(scene),
+      }));
+
+    if (scenes.length === 0) {
+      this.workflowMessage.set("");
+      this.errorMessage.set(
+        "This script has no scene descriptions. Generate a script with visual descriptions first.",
+      );
+      return;
+    }
+
+    const characters: ReelCharacter[] = reel.characters ?? [];
+
+    this.workflowMessage.set(
+      `Generating ${scenes.length} cartoon scene image(s). This may take a few minutes...`,
+    );
+
+    this.reelService
+      .generateCartoonScenes(scenes, characters)
+      .pipe(timeout(300000))
+      .subscribe({
+        next: (response) => {
+          if (
+            !response?.success ||
+            !response.scenes?.length
+          ) {
+            this.workflowMessage.set("");
+            this.errorMessage.set(
+              response?.error || "Cartoon image generation failed.",
+            );
+            return;
+          }
+
+          const filenames = [...response.scenes]
+            .sort((a, b) => a.sceneNumber - b.sceneNumber)
+            .map((scene) => scene.filename);
+
+          this.workflowMessage.set(
+            `Generated ${filenames.length} cartoon image(s). Rendering your reel...`,
+          );
+
+          this.renderLoading.set(true);
+
+          this.reelService
+            .renderCartoonReel(audioFilename, filenames)
+            .pipe(
+              timeout(180000),
+              finalize(() => {
+                this.renderLoading.set(false);
+              }),
+            )
+            .subscribe({
+              next: (renderResponse) => {
+                this.handleRenderResponse(renderResponse);
+              },
+              error: (error) => {
+                this.handleRenderError(error);
+              },
+            });
+        },
+        error: (error) => {
+          console.error(
+            "[ReelExpert] Cartoon image generation failed:",
+            error,
+          );
+
+          this.workflowMessage.set("");
+          this.errorMessage.set(
+            error?.error?.error ||
+              (error?.name === "TimeoutError"
+                ? "Cartoon image generation took too long. Check the backend terminal."
+                : "Could not generate cartoon images. Check the Cloudflare configuration and backend terminal."),
+          );
+        },
+      });
+  }
+
+  private buildScenePrompt(scene: ReelScene): string {
+    const details = [
+      scene.visual,
+      scene.speaker && scene.dialogue
+        ? `Story context: ${scene.speaker} says, "${scene.dialogue}".`
+        : "",
+      scene.onScreenText
+        ? `Story context includes this on-screen text: ${scene.onScreenText}.`
+        : "",
+    ];
+
+    return details.filter(Boolean).join(" ");
+  }
+
+  private renderStandardReel(audioFilename: string): void {
+    this.workflowMessage.set("Rendering your vertical reel...");
+    this.renderLoading.set(true);
+
+    this.reelService
+      .renderReel(this.selectedFootage(), audioFilename)
+      .pipe(
+        timeout(180000),
+        finalize(() => {
+          this.renderLoading.set(false);
+        }),
+      )
+      .subscribe({
+        next: (response) => {
+          this.handleRenderResponse(response);
+        },
+        error: (error) => {
+          this.handleRenderError(error);
+        },
+      });
+  }
+
+  private handleRenderResponse(
+    response: {
+      success: boolean;
+      error?: string;
+      message?: string;
+      video?: { url: string };
+    },
+  ): void {
+    if (!response?.success || !response.video) {
+      this.workflowMessage.set("");
+      this.errorMessage.set(
+        response?.error || response?.message || "Video rendering failed.",
+      );
+      return;
+    }
+
+    this.videoUrl.set(
+      this.reelService.getAssetUrl(response.video.url),
+    );
+
+    this.workflowMessage.set(
+      "Your reel is ready to preview and download.",
+    );
+    this.errorMessage.set("");
+  }
+
+  private handleRenderError(error: any): void {
+    console.error("[ReelExpert] Video rendering failed:", error);
+
+    this.workflowMessage.set("");
+    this.errorMessage.set(
+      error?.error?.error ||
+        (error?.name === "TimeoutError"
+          ? "Video rendering timed out. Check the backend terminal."
+          : "Video rendering failed. Check FFmpeg and the backend terminal."),
+    );
   }
 
   resetForm(): void {
@@ -326,6 +450,7 @@ export class CreateReel implements OnInit {
       language: "English",
       duration: 30,
       style: "Engaging",
+      mode: "standard",
     });
 
     const footage = this.availableFootage();
