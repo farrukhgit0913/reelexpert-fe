@@ -41,6 +41,7 @@ export class CreateReel implements OnInit {
   readonly audioUrl = signal("");
   readonly videoUrl = signal("");
   readonly workflowMessage = signal("");
+  workflowProgress = signal(0);
 
   readonly selectedCharacterVoices = signal<Record<string, string>>({});
 
@@ -371,6 +372,7 @@ setCharacterVoice(name: string, voice: string): void {
       return;
     }
 
+    this.workflowProgress.set(5);
     this.workflowMessage.set(
       `Generating ${scenes.length} cartoon scene image(s)...`,
     );
@@ -392,6 +394,7 @@ setCharacterVoice(name: string, voice: string): void {
             (a, b) => a.sceneNumber - b.sceneNumber,
           );
 
+          this.workflowProgress.set(25);
           this.renderLoading.set(true);
 
           from(orderedScenes)
@@ -412,7 +415,7 @@ setCharacterVoice(name: string, voice: string): void {
                   .animateCartoonScene(
                     scene.filename,
                     animationPrompt,
-                    3,
+                    5,
                   )
                   .pipe(
                     timeout(600000),
@@ -427,6 +430,9 @@ setCharacterVoice(name: string, voice: string): void {
                         );
                       }
 
+                      this.workflowProgress.set(
+                        Math.round(25 + ((index + 1) / orderedScenes.length) * 60),
+                      );
                       return animationResponse.clip.filename;
                     }),
                   );
@@ -444,8 +450,9 @@ setCharacterVoice(name: string, voice: string): void {
                   return;
                 }
 
+                this.workflowProgress.set(90);
                 this.workflowMessage.set(
-                  `Animated ${animatedClipFilenames.length} scene(s). Rendering your reel with dialogue audio...`,
+                  `All ${animatedClipFilenames.length} scene(s) animated. Rendering your reel with dialogue audio...`,
                 );
 
                 const dialogueScenes = (reel.scenes ?? [])

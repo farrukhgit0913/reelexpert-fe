@@ -139,3 +139,159 @@
   overflow-wrap: anywhere;
 }
 
+
+/* Cartoon story workflow */
+.character-voice-settings {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid var(--re-border, #dce5f2);
+  border-radius: 16px;
+  background: var(--re-surface, #f8faff);
+}
+
+.character-voice-settings h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.character-voice-settings > p {
+  margin: -8px 0 0;
+  color: var(--re-muted, #7889a2);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.character-voice-settings .form-field {
+  min-width: 0;
+}
+
+.character-voice-settings label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.character-voice-settings select {
+  width: 100%;
+  max-width: 100%;
+}
+
+.workflow-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--re-border, #dce5f2);
+  border-radius: 12px;
+  background: var(--re-surface, #f8faff);
+  color: var(--re-text, #23324a);
+  font-size: 0.9rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.video-preview {
+  align-items: start;
+}
+
+.video-preview video {
+  border: 1px solid var(--re-border, #dce5f2);
+  box-shadow: 0 12px 32px rgb(15 23 42 / 12%);
+}
+
+.video-preview a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid var(--re-border, #dce5f2);
+  border-radius: 10px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.video-preview a:hover {
+  background: var(--re-surface, #f8faff);
+  border-color: var(--re-primary, #3977e8);
+}
+
+.scene-card {
+  height: 100%;
+}
+
+.scene-card .scene-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.scene-card .scene-header h3 {
+  min-width: 0;
+}
+
+.video-creation-section {
+  min-width: 0;
+}
+
+.video-creation-section audio {
+  max-width: 100%;
+}
+
+@media (max-width: 640px) {
+  .character-voice-settings {
+    padding: 16px;
+  }
+
+  .video-preview video {
+    max-width: min(100%, 320px);
+    max-height: 70vh;
+  }
+
+  .workflow-message {
+    padding: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .video-preview a {
+    transition: none;
+  }
+}
+
+.workflow-progress {
+  width: 100%;
+  height: 8px;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--re-border, #dce5f2);
+}
+
+.workflow-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--re-primary, #3977e8);
+  transition: width 250ms ease;
+}
+
+.workflow-progress-label {
+  margin: 6px 0 0;
+  color: var(--re-muted, #7889a2);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workflow-progress > span {
+    transition: none;
+  }
+}

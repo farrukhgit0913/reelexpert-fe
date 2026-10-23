@@ -412,6 +412,24 @@
               {{ workflowMessage() }}
             </p>
 
+            <div
+  *ngIf="workflowMessage() && workflowProgress() > 0"
+  class="workflow-progress"
+  role="progressbar"
+  aria-label="Cartoon generation progress"
+  [attr.aria-valuenow]="workflowProgress()"
+  aria-valuemin="0"
+  aria-valuemax="100"
+>
+  <span [style.width.%]="workflowProgress()"></span>
+</div>
+<p
+  *ngIf="workflowMessage() && workflowProgress() > 0"
+  class="workflow-progress-label"
+>
+  {{ workflowProgress() }}% complete
+</p>
+
             <!-- Generated audio -->
             <div *ngIf="audioUrl()" class="audio-preview">
               <h3>{{ reel.mode === 'cartoon' ? 'Character dialogue audio' : 'Generated narration' }}</h3>
