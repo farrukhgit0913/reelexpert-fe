@@ -55,6 +55,14 @@ export interface GenerateReelResponse {
   error?: string;
 }
 
+export interface DialogueTimingLine {
+  speaker: string;
+  text: string;
+  durationSeconds: number;
+  startSeconds: number;
+  endSeconds: number;
+}
+
 export interface TtsResponse {
   success: boolean;
   message?: string;
@@ -64,6 +72,7 @@ export interface TtsResponse {
     url: string;
     format: string;
     voice: string;
+    lines?: DialogueTimingLine[];
   };
 }
 
@@ -84,6 +93,18 @@ export interface CartoonScenesResponse {
   success: boolean;
   count: number;
   scenes: CartoonSceneImage[];
+  error?: string;
+}
+export interface AnimateCartoonResponse {
+  success: boolean;
+  message?: string;
+  clip?: {
+    filename: string;
+    url: string;
+    durationSeconds: number;
+    sizeBytes: number;
+    provider: string;
+  };
   error?: string;
 }
 
@@ -130,6 +151,17 @@ export class ReelService {
     );
   }
 
+  generateDialogue(
+  lines: Array<{ speaker: string; text: string }>,
+  fallbackVoice = "Samantha",
+  characterVoices: Record<string, string> = {},
+): Observable<TtsResponse> {
+  return this.http.post<TtsResponse>(
+    `${this.apiUrl}/tts/dialogue`,
+    { lines, fallbackVoice, characterVoices },
+  );
+}
+
   getFootage(): Observable<FootageResponse> {
     return this.http.get<FootageResponse>(
       `${this.apiUrl}/footage`,
@@ -166,6 +198,28 @@ export class ReelService {
         audioFilename,
         cartoonSceneFilenames,
       },
+    );
+  }
+
+  animateCartoonScene(
+    imageFilename: string,
+    prompt: string,
+    durationSeconds = 3,
+  ): Observable<AnimateCartoonResponse> {
+    return this.http.post<AnimateCartoonResponse>(
+      `${this.apiUrl}/cartoon/animate`,
+      { imageFilename, prompt, durationSeconds },
+    );
+  }
+
+  renderAnimatedCartoonReel(
+    audioFilename: string,
+    animatedClipFilenames: string[],
+    sceneDurations?: number[],
+  ): Observable<RenderResponse> {
+    return this.http.post<RenderResponse>(
+      `${this.apiUrl}/render`,
+      { audioFilename, animatedClipFilenames, sceneDurations },
     );
   }
 

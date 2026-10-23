@@ -1,4 +1,4 @@
-<section class="create-page">
+ <section class="create-page">
   <header class="page-heading">
     <div>
       <span class="eyebrow">AI CONTENT STUDIO</span>
@@ -14,11 +14,7 @@
 
   <div class="create-grid">
     <!-- Reel settings -->
-    <form
-      [formGroup]="reelForm"
-      (ngSubmit)="generateReel()"
-      class="panel settings-card"
-    >
+    <form [formGroup]="reelForm" (ngSubmit)="generateReel()" class="panel settings-card">
       <div class="panel-heading">
         <div class="heading-icon">✦</div>
         <div>
@@ -35,30 +31,21 @@
           rows="4"
           maxlength="2000"
           placeholder="Example: 5 AI tools that save developers hours every week..."
-          [attr.aria-invalid]="
-            reelForm.controls.topic.touched &&
-            reelForm.controls.topic.invalid
-          "
+          [attr.aria-invalid]="reelForm.controls.topic.touched && reelForm.controls.topic.invalid"
           aria-describedby="topic-error"
         ></textarea>
 
         <div class="field-footer">
           <p
             id="topic-error"
-            *ngIf="
-              reelForm.controls.topic.touched &&
-              reelForm.controls.topic.hasError('required')
-            "
+            *ngIf="reelForm.controls.topic.touched && reelForm.controls.topic.hasError('required')"
             class="field-error"
           >
             Please enter a topic.
           </p>
 
           <p
-            *ngIf="
-              reelForm.controls.topic.touched &&
-              reelForm.controls.topic.hasError('maxlength')
-            "
+            *ngIf="reelForm.controls.topic.touched && reelForm.controls.topic.hasError('maxlength')"
             class="field-error"
           >
             Your topic must be no longer than 2,000 characters.
@@ -138,34 +125,16 @@
         </div>
       </div>
 
-      <div
-        *ngIf="errorMessage()"
-        class="error-banner"
-        role="alert"
-        aria-live="polite"
-      >
+      <div *ngIf="errorMessage()" class="error-banner" role="alert" aria-live="polite">
         <span>!</span>
         <p>{{ errorMessage() }}</p>
       </div>
 
-      <button
-        type="submit"
-        class="btn-primary generate-btn"
-        [disabled]="loading()"
-      >
+      <button type="submit" class="btn-primary generate-btn" [disabled]="loading()">
         <span *ngIf="!loading()" aria-hidden="true">✦</span>
-
-        <span
-          *ngIf="loading()"
-          class="loading-spinner"
-          aria-hidden="true"
-        ></span>
-
+        <span *ngIf="loading()" class="loading-spinner" aria-hidden="true"></span>
         {{ loading() ? 'Generating your reel...' : 'Generate with AI' }}
-
-        <span *ngIf="!loading()" class="button-arrow" aria-hidden="true">
-          →
-        </span>
+        <span *ngIf="!loading()" class="button-arrow" aria-hidden="true">→</span>
       </button>
 
       <p class="form-note">
@@ -192,45 +161,43 @@
             (click)="copyScript()"
             [disabled]="!getScriptToCopy()"
           >
-            <span aria-hidden="true">
-              {{ copied() ? '✓' : '▣' }}
-            </span>
+            <span aria-hidden="true">{{ copied() ? '✓' : '▣' }}</span>
             {{ copied() ? 'Copied!' : 'Copy script' }}
           </button>
         </div>
 
         <div class="result-content">
           <!-- Cartoon characters -->
-        <article
-          class="result-section"
-          *ngIf="reel.mode === 'cartoon' && reel.characters?.length"
-        >
-          <span class="result-label">
-            <span class="result-number">01</span>
-            YOUR CARTOON CHARACTERS
-          </span>
+          <article
+            class="result-section"
+            *ngIf="reel.mode === 'cartoon' && reel.characters?.length"
+          >
+            <span class="result-label">
+              <span class="result-number">01</span>
+              YOUR CARTOON CHARACTERS
+            </span>
 
-          <div class="scene-card" *ngFor="let character of reel.characters">
-            <div class="scene-header">
-              <h3>{{ character.name }}</h3>
-            </div>
+            <div class="scene-card" *ngFor="let character of reel.characters">
+              <div class="scene-header">
+                <h3>{{ character.name }}</h3>
+              </div>
 
-            <div class="scene-detail">
-              <span>Appearance</span>
-              <p>{{ character.appearance }}</p>
-            </div>
+              <div class="scene-detail">
+                <span>Appearance</span>
+                <p>{{ character.appearance }}</p>
+              </div>
 
-            <div class="scene-detail">
-              <span>Personality</span>
-              <p>{{ character.personality }}</p>
-            </div>
+              <div class="scene-detail">
+                <span>Personality</span>
+                <p>{{ character.personality }}</p>
+              </div>
 
-            <div class="scene-detail">
-              <span>Voice description</span>
-              <p>{{ character.voiceDescription }}</p>
+              <div class="scene-detail">
+                <span>Voice description</span>
+                <p>{{ character.voiceDescription }}</p>
+              </div>
             </div>
-          </div>
-        </article>
+          </article>
 
           <!-- Hook -->
           <article class="result-section hook-section">
@@ -248,17 +215,11 @@
               FULL SCRIPT
             </span>
 
-            <p
-              class="script-text"
-              *ngIf="reel.script || reel.voiceover"
-            >
+            <p class="script-text" *ngIf="reel.script || reel.voiceover">
               {{ reel.script || reel.voiceover }}
             </p>
 
-            <div
-              class="script-text"
-              *ngIf="!reel.script && !reel.voiceover"
-            >
+            <div class="script-text" *ngIf="!reel.script && !reel.voiceover">
               <p *ngFor="let scene of reel.scenes">
                 {{ scene.voiceover || scene.narration }}
               </p>
@@ -272,15 +233,10 @@
               SCENE BREAKDOWN
             </span>
 
-            <div
-              *ngFor="let scene of reel.scenes; let i = index"
-              class="scene-card"
-            >
+            <div *ngFor="let scene of reel.scenes; let i = index" class="scene-card">
               <div class="scene-header">
                 <h3>Scene {{ scene.sceneNumber || i + 1 }}</h3>
-                <span class="scene-duration">
-                  {{ scene.duration }} sec
-                </span>
+                <span class="scene-duration">{{ scene.duration }} sec</span>
               </div>
 
               <div class="scene-detail">
@@ -305,10 +261,7 @@
                 <p>{{ scene.voiceover || scene.narration }}</p>
               </div>
 
-              <div
-                *ngIf="scene.textOverlay || scene.onScreenText"
-                class="onscreen-text"
-              >
+              <div *ngIf="scene.textOverlay || scene.onScreenText" class="onscreen-text">
                 {{ scene.textOverlay || scene.onScreenText }}
               </div>
             </div>
@@ -326,9 +279,7 @@
             </span>
 
             <div class="hashtag-list">
-              <span *ngFor="let hashtag of reel.hashtags">
-                {{ hashtag }}
-              </span>
+              <span *ngFor="let hashtag of reel.hashtags">{{ hashtag }}</span>
             </div>
 
             <p *ngIf="!reel.hashtags?.length" class="field-hint">
@@ -344,11 +295,15 @@
             </span>
 
             <p>
-              Choose background footage, generate narration, and render your
-              vertical video.
+              {{
+                reel.mode === 'cartoon'
+                  ? 'Choose a voice for each character, generate their dialogue, and render your animated story.'
+                  : 'Choose background footage, generate narration, and render your vertical video.'
+              }}
             </p>
 
-            <div class="form-field">
+            <!-- Background footage is only required for Standard Reel -->
+            <div class="form-field" *ngIf="reel.mode !== 'cartoon'">
               <label for="stock-footage">Background footage</label>
 
               <select
@@ -356,24 +311,76 @@
                 name="stockFootage"
                 [ngModel]="selectedFootage()"
                 (ngModelChange)="selectedFootage.set($event)"
+                [ngModelOptions]="{ standalone: true }"
               >
                 <option value="">Select footage</option>
-
-                <option
-                  *ngFor="let footage of availableFootage()"
-                  [value]="footage"
-                >
+                <option *ngFor="let footage of availableFootage()" [value]="footage">
                   {{ footage }}
                 </option>
               </select>
 
-              <p
-                class="field-hint"
-                *ngIf="availableFootage().length === 0"
-              >
+              <p class="field-hint" *ngIf="availableFootage().length === 0">
                 No footage found. Check that the backend contains video files
                 in assets/stock-footage and that the footage API is running.
               </p>
+            </div>
+
+            <!-- Standard narration voice -->
+            <div class="form-field" *ngIf="reel.mode !== 'cartoon'">
+              <label for="narrator-voice">Narration voice</label>
+
+              <select
+                id="narrator-voice"
+                name="narratorVoice"
+                [ngModel]="selectedVoice()"
+                (ngModelChange)="selectedVoice.set($event)"
+                [ngModelOptions]="{ standalone: true }"
+              >
+                <option value="Samantha">Samantha (default)</option>
+                <option value="Ayaan">Ayaan (AI cartoon boy, Qwen3-TTS)</option>
+                <option value="Mina">Mina (AI cartoon girl, Qwen3-TTS)</option>
+                <option value="Alex">Alex (macOS)</option>
+                <option value="Victoria">Victoria (macOS)</option>
+                <option value="Daniel">Daniel (macOS)</option>
+                <option value="Karen">Karen (macOS)</option>
+                <option value="Moira">Moira (macOS)</option>
+                <option value="Tessa">Tessa (macOS)</option>
+              </select>
+
+              <p class="field-hint">
+                Ayaan and Mina use your local Qwen3-TTS model. Other voices use macOS speech.
+              </p>
+            </div>
+
+            <!-- Independent voice selection for every cartoon character -->
+            <div
+              *ngIf="reel.mode === 'cartoon' && reel.characters?.length"
+              class="character-voice-settings"
+            >
+              <h3>Character voices</h3>
+              <p class="field-hint">
+                Choose a separate voice for each character in your animated story.
+              </p>
+
+              <div
+                class="form-field"
+                *ngFor="let character of reel.characters; let i = index"
+              >
+                <label [for]="'character-voice-' + i">
+                  {{ character.name }}'s voice
+                </label>
+
+                <select
+                  [id]="'character-voice-' + i"
+                  [ngModel]="characterVoice(character.name, i)"
+                  (ngModelChange)="setCharacterVoice(character.name, $event)"
+                  [ngModelOptions]="{ standalone: true }"
+                >
+                  <option *ngFor="let voice of availableVoices" [value]="voice.value">
+                    {{ voice.label }}
+                  </option>
+                </select>
+              </div>
             </div>
 
             <button
@@ -382,7 +389,7 @@
               [disabled]="
                 narrationLoading() ||
                 renderLoading() ||
-                !selectedFootage()
+                (reel.mode !== 'cartoon' && !selectedFootage())
               "
               (click)="generateNarrationAndRender()"
             >
@@ -394,58 +401,36 @@
 
               {{
                 narrationLoading()
-                  ? 'Generating narration...'
+                  ? 'Generating dialogue...'
                   : renderLoading()
                     ? 'Rendering video...'
                     : 'Generate video'
               }}
             </button>
 
-            <p
-              *ngIf="workflowMessage()"
-              aria-live="polite"
-              class="workflow-message"
-            >
+            <p *ngIf="workflowMessage()" aria-live="polite" class="workflow-message">
               {{ workflowMessage() }}
             </p>
 
-            <!-- Narration audio -->
+            <!-- Generated audio -->
             <div *ngIf="audioUrl()" class="audio-preview">
-              <h3>Generated narration</h3>
-              <audio
-                [src]="audioUrl()"
-                controls
-                preload="metadata"
-              ></audio>
+              <h3>{{ reel.mode === 'cartoon' ? 'Character dialogue audio' : 'Generated narration' }}</h3>
+              <audio [src]="audioUrl()" controls preload="metadata"></audio>
             </div>
 
             <!-- Finished video -->
             <div *ngIf="videoUrl()" class="video-preview">
               <h3>Your finished reel</h3>
+              <video [src]="videoUrl()" controls playsinline preload="metadata"></video>
 
-              <video
-                [src]="videoUrl()"
-                controls
-                playsinline
-                preload="metadata"
-              ></video>
-
-              <a
-                [href]="videoUrl()"
-                download="reelexpert-reel.mp4"
-                class="btn-secondary"
-              >
+              <a [href]="videoUrl()" download="reelexpert-reel.mp4" class="btn-secondary">
                 Download reel
               </a>
             </div>
           </article>
         </div>
 
-        <button
-          type="button"
-          class="btn-secondary reset-btn"
-          (click)="resetForm()"
-        >
+        <button type="button" class="btn-secondary reset-btn" (click)="resetForm()">
           + Create another reel
         </button>
       </ng-container>

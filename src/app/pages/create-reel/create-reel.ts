@@ -1,3 +1,4 @@
+
 import { CommonModule } from "@angular/common";
 import { Component, inject, OnInit, signal } from "@angular/core";
 import {
@@ -6,11 +7,10 @@ import {
   ReactiveFormsModule,
   Validators,
 } from "@angular/forms";
-import { finalize, timeout } from "rxjs";
+import { concatMap, finalize, from, map, timeout, toArray } from "rxjs";
 
 import {
   GeneratedReel,
-  ReelCharacter,
   ReelScene,
   ReelService,
 } from "../../services/reel";
@@ -36,10 +36,37 @@ export class CreateReel implements OnInit {
 
   readonly availableFootage = signal<string[]>([]);
   readonly selectedFootage = signal("");
+  readonly selectedVoice = signal("Samantha");
 
   readonly audioUrl = signal("");
   readonly videoUrl = signal("");
   readonly workflowMessage = signal("");
+
+  readonly selectedCharacterVoices = signal<Record<string, string>>({});
+
+readonly availableVoices = [
+  { value: "Ayaan", label: "Ayaan (AI cartoon boy)" },
+  { value: "Mina", label: "Mina (AI cartoon girl)" },
+  { value: "Samantha", label: "Samantha (macOS)" },
+  { value: "Alex", label: "Alex (macOS)" },
+  { value: "Victoria", label: "Victoria (macOS)" },
+  { value: "Daniel", label: "Daniel (macOS)" },
+  { value: "Karen", label: "Karen (macOS)" },
+  { value: "Moira", label: "Moira (macOS)" },
+  { value: "Tessa", label: "Tessa (macOS)" },
+];
+
+characterVoice(name: string, index: number): string {
+  return this.selectedCharacterVoices()[name] ??
+    (index === 0 ? "Ayaan" : index === 1 ? "Mina" : this.selectedVoice());
+}
+
+setCharacterVoice(name: string, voice: string): void {
+  this.selectedCharacterVoices.update((current) => ({
+    ...current,
+    [name]: voice,
+  }));
+}
 
   readonly reelForm = this.fb.nonNullable.group({
     topic: ["", [Validators.required, Validators.maxLength(2000)]],
@@ -76,7 +103,11 @@ export class CreateReel implements OnInit {
             footage.length > 0 &&
             !footage.includes(this.selectedFootage())
           ) {
-            this.selectedFootage.set(footage[0]);
+            const firstFootage = footage[0];
+
+            if (firstFootage) {
+              this.selectedFootage.set(firstFootage);
+            }
           }
 
           this.workflowMessage.set(
@@ -94,7 +125,9 @@ export class CreateReel implements OnInit {
   }
 
   generateReel(): void {
-    if (this.loading()) return;
+    if (this.loading()) {
+      return;
+    }
 
     if (this.reelForm.invalid) {
       this.reelForm.markAllAsTouched();
@@ -152,7 +185,9 @@ export class CreateReel implements OnInit {
   getScriptToCopy(): string {
     const reel = this.generatedReel();
 
-    if (!reel) return "";
+    if (!reel) {
+      return "";
+    }
 
     const sceneNarration =
       reel.scenes
@@ -196,16 +231,12 @@ export class CreateReel implements OnInit {
 
   generateNarrationAndRender(): void {
     const reel = this.generatedReel();
-    const narration = this.getScriptToCopy();
 
-    if (!reel || !narration) {
-      this.errorMessage.set(
-        "Generate a script before creating the video.",
-      );
+    if (!reel) {
+      this.errorMessage.set("Generate a script before creating the video.");
       return;
     }
 
-    // Use the selected form mode if the script API doesn't return one.
     const mode = reel.mode ?? this.reelForm.controls.mode.value;
 
     if (mode === "standard" && !this.selectedFootage()) {
@@ -217,16 +248,59 @@ export class CreateReel implements OnInit {
       return;
     }
 
+    const dialogueLines = (reel.scenes ?? [])
+      .filter((scene) => scene.speaker?.trim() && scene.dialogue?.trim())
+      .sort((a, b) => a.sceneNumber - b.sceneNumber)
+      .map((scene) => ({
+        speaker: scene.speaker!.trim(),
+        text: scene.dialogue!.trim(),
+      }));
+
+    const narration = this.getScriptToCopy();
+
+    if (mode === "cartoon" && dialogueLines.length === 0) {
+      this.errorMessage.set(
+        "This cartoon script has no speaker dialogue. Generate a new cartoon script first.",
+      );
+      return;
+    }
+
+    if (mode === "standard" && !narration) {
+      this.errorMessage.set("The script has no narration to generate.");
+      return;
+    }
+
     this.errorMessage.set("");
     this.audioUrl.set("");
     this.videoUrl.set("");
     this.narrationLoading.set(true);
-    this.workflowMessage.set("Generating narration...");
 
-    this.reelService
-      .generateNarration(narration)
+    this.workflowMessage.set(
+      mode === "cartoon"
+        ? `Generating dialogue audio for ${dialogueLines.length} line(s)...`
+        : "Generating narration...",
+    );
+
+    const audioRequest =
+      mode === "cartoon"
+        ? this.reelService.generateDialogue(
+            dialogueLines,
+            this.selectedVoice(),
+            Object.fromEntries(
+              (reel.characters ?? []).map((character, index) => [
+                character.name,
+                this.characterVoice(character.name, index),
+              ]),
+            ),
+          )
+        : this.reelService.generateNarration(
+            narration,
+            this.selectedVoice(),
+          );
+
+    audioRequest
       .pipe(
-        timeout(60000),
+        timeout(mode === "cartoon" ? 600000 : 60000),
         finalize(() => {
           this.narrationLoading.set(false);
         }),
@@ -236,7 +310,7 @@ export class CreateReel implements OnInit {
           if (!audioResponse?.success || !audioResponse.audio) {
             this.workflowMessage.set("");
             this.errorMessage.set(
-              audioResponse?.error || "Narration generation failed.",
+              audioResponse?.error || "Audio generation failed.",
             );
             return;
           }
@@ -251,18 +325,21 @@ export class CreateReel implements OnInit {
             this.generateCartoonImagesAndRender(
               reel,
               audioFilename,
+              audioResponse.audio.lines,
             );
           } else {
             this.renderStandardReel(audioFilename);
           }
         },
         error: (error) => {
+          console.error("[ReelExpert] Audio generation failed:", error);
+
           this.workflowMessage.set("");
           this.errorMessage.set(
             error?.error?.error ||
               (error?.name === "TimeoutError"
-                ? "Narration generation timed out. Check the backend terminal."
-                : "Narration generation failed. Check the backend terminal."),
+                ? "Audio generation timed out. Check the backend and Qwen3-TTS terminals."
+                : "Audio generation failed. Check the backend terminal."),
           );
         },
       });
@@ -271,6 +348,13 @@ export class CreateReel implements OnInit {
   private generateCartoonImagesAndRender(
     reel: GeneratedReel,
     audioFilename: string,
+    dialogueTimeline?: Array<{
+      speaker: string;
+      text: string;
+      durationSeconds: number;
+      startSeconds: number;
+      endSeconds: number;
+    }>,
   ): void {
     const scenes = (reel.scenes ?? [])
       .filter((scene) => scene.visual?.trim())
@@ -287,21 +371,16 @@ export class CreateReel implements OnInit {
       return;
     }
 
-    const characters: ReelCharacter[] = reel.characters ?? [];
-
     this.workflowMessage.set(
-      `Generating ${scenes.length} cartoon scene image(s). This may take a few minutes...`,
+      `Generating ${scenes.length} cartoon scene image(s)...`,
     );
 
     this.reelService
-      .generateCartoonScenes(scenes, characters)
+      .generateCartoonScenes(scenes, reel.characters ?? [])
       .pipe(timeout(300000))
       .subscribe({
         next: (response) => {
-          if (
-            !response?.success ||
-            !response.scenes?.length
-          ) {
+          if (!response?.success || !response.scenes?.length) {
             this.workflowMessage.set("");
             this.errorMessage.set(
               response?.error || "Cartoon image generation failed.",
@@ -309,30 +388,132 @@ export class CreateReel implements OnInit {
             return;
           }
 
-          const filenames = [...response.scenes]
-            .sort((a, b) => a.sceneNumber - b.sceneNumber)
-            .map((scene) => scene.filename);
-
-          this.workflowMessage.set(
-            `Generated ${filenames.length} cartoon image(s). Rendering your reel...`,
+          const orderedScenes = [...response.scenes].sort(
+            (a, b) => a.sceneNumber - b.sceneNumber,
           );
 
           this.renderLoading.set(true);
 
-          this.reelService
-            .renderCartoonReel(audioFilename, filenames)
+          from(orderedScenes)
             .pipe(
-              timeout(180000),
-              finalize(() => {
-                this.renderLoading.set(false);
+              concatMap((scene, index) => {
+                this.workflowMessage.set(
+                  `Animating scene ${index + 1} of ${orderedScenes.length} with Wan 2.2...`,
+                );
+
+                const animationPrompt = [
+                  scene.prompt,
+                  "Animate this scene with subtle natural character movement and gentle camera motion.",
+                  "Preserve the characters' identity, clothing, colors, and scene composition.",
+                  "Keep the motion smooth and family-friendly. Do not add text, subtitles, logos, or new characters.",
+                ].join(" ");
+
+                return this.reelService
+                  .animateCartoonScene(
+                    scene.filename,
+                    animationPrompt,
+                    3,
+                  )
+                  .pipe(
+                    timeout(600000),
+                    map((animationResponse) => {
+                      if (
+                        !animationResponse?.success ||
+                        !animationResponse.clip?.filename
+                      ) {
+                        throw new Error(
+                          animationResponse?.error ||
+                            `Animation failed for scene ${scene.sceneNumber}.`,
+                        );
+                      }
+
+                      return animationResponse.clip.filename;
+                    }),
+                  );
               }),
+              toArray(),
             )
             .subscribe({
-              next: (renderResponse) => {
-                this.handleRenderResponse(renderResponse);
+              next: (animatedClipFilenames) => {
+                if (animatedClipFilenames.length === 0) {
+                  this.renderLoading.set(false);
+                  this.workflowMessage.set("");
+                  this.errorMessage.set(
+                    "No animated clips were generated.",
+                  );
+                  return;
+                }
+
+                this.workflowMessage.set(
+                  `Animated ${animatedClipFilenames.length} scene(s). Rendering your reel with dialogue audio...`,
+                );
+
+                const dialogueScenes = (reel.scenes ?? [])
+                  .filter(
+                    (item) =>
+                      item.speaker?.trim() && item.dialogue?.trim(),
+                  )
+                  .sort((a, b) => a.sceneNumber - b.sceneNumber);
+
+                const canAlignDialogue =
+                  !!dialogueTimeline &&
+                  dialogueTimeline.length > 0 &&
+                  dialogueTimeline.length === dialogueScenes.length &&
+                  orderedScenes.length === dialogueScenes.length &&
+                  orderedScenes.every(
+                    (scene, index) =>
+                      scene.sceneNumber === dialogueScenes[index].sceneNumber,
+                  );
+
+                const sceneDurations = canAlignDialogue
+                  ? dialogueTimeline!.map((line, index) => {
+                      const nextLine = dialogueTimeline![index + 1];
+                      const slotEnd = nextLine
+                        ? nextLine.startSeconds
+                        : line.endSeconds;
+
+                      return Number(
+                        (slotEnd - line.startSeconds).toFixed(3),
+                      );
+                    })
+                  : undefined;
+
+                this.reelService
+                  .renderAnimatedCartoonReel(
+                    audioFilename,
+                    animatedClipFilenames,
+                    sceneDurations,
+                  )
+                  .pipe(
+                    timeout(300000),
+                    finalize(() => {
+                      this.renderLoading.set(false);
+                    }),
+                  )
+                  .subscribe({
+                    next: (renderResponse) => {
+                      this.handleRenderResponse(renderResponse);
+                    },
+                    error: (error) => {
+                      this.handleRenderError(error);
+                    },
+                  });
               },
               error: (error) => {
-                this.handleRenderError(error);
+                console.error(
+                  "[ReelExpert] Cartoon animation failed:",
+                  error,
+                );
+
+                this.renderLoading.set(false);
+                this.workflowMessage.set("");
+                this.errorMessage.set(
+                  error?.error?.error ||
+                    error?.message ||
+                    (error?.name === "TimeoutError"
+                      ? "Cartoon animation timed out. Check the backend and Wan 2.2 service."
+                      : "Could not animate the cartoon scenes. Check the backend terminal."),
+                );
               },
             });
         },
@@ -346,8 +527,8 @@ export class CreateReel implements OnInit {
           this.errorMessage.set(
             error?.error?.error ||
               (error?.name === "TimeoutError"
-                ? "Cartoon image generation took too long. Check the backend terminal."
-                : "Could not generate cartoon images. Check the Cloudflare configuration and backend terminal."),
+                ? "Cartoon image generation timed out. Check the backend terminal."
+                : "Could not generate cartoon images. Check the backend terminal."),
           );
         },
       });
@@ -442,6 +623,7 @@ export class CreateReel implements OnInit {
     this.audioUrl.set("");
     this.videoUrl.set("");
     this.workflowMessage.set("");
+    this.selectedVoice.set("Samantha");
 
     this.reelForm.reset({
       topic: "",
@@ -454,9 +636,12 @@ export class CreateReel implements OnInit {
     });
 
     const footage = this.availableFootage();
+    const firstFootage = footage[0];
 
-    if (footage.length > 0) {
-      this.selectedFootage.set(footage[0]);
+    if (firstFootage) {
+      this.selectedFootage.set(firstFootage);
+    } else {
+      this.selectedFootage.set("");
     }
   }
 }
