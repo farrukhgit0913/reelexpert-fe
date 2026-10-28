@@ -47,6 +47,36 @@
     </a>
 
     <a
+  routerLink="/image-to-cartoon"
+  routerLinkActive="active"
+  (click)="navigate.emit()"
+>
+  <svg
+    class="nav-icon"
+    viewBox="0 0 24 24"
+    fill="none"
+    aria-hidden="true"
+  >
+    <rect
+      x="3" y="3" width="18" height="18" rx="4"
+      stroke="currentColor" stroke-width="1.8"
+    />
+    <circle
+      cx="8.5" cy="8.5" r="1.5"
+      stroke="currentColor" stroke-width="1.5"
+    />
+    <path
+      d="M21 15L16 10L5 21"
+      stroke="currentColor" stroke-width="1.8"
+      stroke-linecap="round" stroke-linejoin="round"
+    />
+  </svg>
+
+  <span>Image to Cartoon</span>
+  <span class="nav-badge">NEW</span>
+</a>
+
+    <a
       routerLink="/reels"
       routerLinkActive="active"
       (click)="navigate.emit()"

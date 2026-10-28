@@ -21,6 +21,12 @@ export const routes: Routes = [
         .then(m => m.Reels)
   },
   {
+  path: 'image-to-cartoon',
+  loadComponent: () =>
+    import('./pages/image-to-cartoon/image-to-cartoon')
+      .then(m => m.ImageToCartoon)
+  },
+  {
     path: 'analytics',
     loadComponent: () =>
       import('./pages/analytics/analytics')

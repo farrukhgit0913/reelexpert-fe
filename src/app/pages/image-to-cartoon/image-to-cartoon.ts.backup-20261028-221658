@@ -1,0 +1,323 @@
+
+import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, signal } from '@angular/core';
+
+type CartoonStyle = 'anime' | 'ghibli' | '3d' | 'comic';
+
+interface CartoonWorkerResponse {
+  pixels?: ArrayBuffer;
+  error?: string;
+}
+
+@Component({
+  selector: 'app-image-to-cartoon',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './image-to-cartoon.html',
+  styleUrl: './image-to-cartoon.css'
+})
+export class ImageToCartoon implements OnDestroy {
+  readonly selectedStyle = signal<CartoonStyle>('anime');
+  readonly originalPreview = signal<string | null>(null);
+  readonly resultPreview = signal<string | null>(null);
+  readonly fileName = signal('');
+  readonly errorMessage = signal('');
+  readonly isProcessing = signal(false);
+  readonly resultReady = signal(false);
+
+  private worker: Worker | null = null;
+  private workerReject: ((reason?: unknown) => void) | null = null;
+  private taskId = 0;
+  private previewUrl: string | null = null;
+
+  readonly styles: {
+    id: CartoonStyle;
+    name: string;
+    description: string;
+  }[] = [
+    {
+      id: 'anime',
+      name: 'Anime',
+      description: 'Smooth colors and crisp outlines'
+    },
+    {
+      id: 'ghibli',
+      name: 'Ghibli-inspired',
+      description: 'Soft, painterly storybook colors'
+    },
+    {
+      id: '3d',
+      name: '3D Cartoon',
+      description: 'Vivid colors and smooth shading'
+    },
+    {
+      id: 'comic',
+      name: 'Comic',
+      description: 'Bold edges and high contrast'
+    }
+  ];
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    this.errorMessage.set('');
+
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      this.errorMessage.set('Choose a JPG, PNG, or WebP image.');
+      input.value = '';
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      this.errorMessage.set('Choose an image smaller than 10 MB.');
+      input.value = '';
+      return;
+    }
+
+    this.cancelProcessing();
+    this.clearPreviewUrl();
+
+    this.previewUrl = URL.createObjectURL(file);
+    this.originalPreview.set(this.previewUrl);
+    this.fileName.set(file.name);
+    this.resultPreview.set(null);
+    this.resultReady.set(false);
+    this.errorMessage.set('');
+  }
+
+  selectStyle(id: string): void {
+    if (!['anime', 'ghibli', '3d', 'comic'].includes(id)) {
+      return;
+    }
+
+    this.selectedStyle.set(id as CartoonStyle);
+    this.resultPreview.set(null);
+    this.resultReady.set(false);
+  }
+
+  async transformImage(): Promise<void> {
+    const source = this.originalPreview();
+
+    if (!source || this.isProcessing()) return;
+
+    const currentTask = ++this.taskId;
+
+    this.isProcessing.set(true);
+    this.errorMessage.set('');
+    this.resultReady.set(false);
+    this.resultPreview.set(null);
+
+    try {
+      this.errorMessage.set('Preparing image...');
+
+      const image = await this.loadImage(source);
+
+      if (currentTask !== this.taskId) return;
+
+      // Limit processing dimensions to keep memory usage low.
+      const maxDimension = 720;
+      const scale = Math.min(
+        1,
+        maxDimension / Math.max(image.naturalWidth, image.naturalHeight)
+      );
+
+      const width = Math.max(1, Math.round(image.naturalWidth * scale));
+      const height = Math.max(1, Math.round(image.naturalHeight * scale));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+
+      const context = canvas.getContext('2d', {
+        willReadFrequently: true
+      });
+
+      if (!context) {
+        throw new Error('Could not prepare the input image.');
+      }
+
+      context.drawImage(image, 0, 0, width, height);
+
+      const imageData = context.getImageData(0, 0, width, height);
+
+      if (currentTask !== this.taskId) return;
+
+      this.errorMessage.set('Applying cartoon effect...');
+
+      const worker = new Worker(
+        new URL('./image-cartoon.worker', import.meta.url),
+        { type: 'module' }
+      );
+
+      this.worker = worker;
+
+      const result = await new Promise<ArrayBuffer>(
+        (resolve, reject) => {
+          this.workerReject = reject;
+
+          worker.onmessage = (
+            event: MessageEvent<CartoonWorkerResponse>
+          ) => {
+            if (currentTask !== this.taskId) return;
+
+            const response = event.data;
+
+            // This task no longer has a pending worker promise.
+            this.workerReject = null;
+
+            if (response.error) {
+              reject(new Error(response.error));
+              return;
+            }
+
+            if (!response.pixels) {
+              reject(new Error('The worker returned no image data.'));
+              return;
+            }
+
+            resolve(response.pixels);
+          };
+
+          worker.onerror = () => {
+            if (currentTask !== this.taskId) return;
+
+            this.workerReject = null;
+            reject(
+              new Error(
+                'Image processing worker failed. Please try again.'
+              )
+            );
+          };
+
+          try {
+            worker.postMessage(
+              {
+                width,
+                height,
+                pixels: imageData.data.buffer,
+                style: this.selectedStyle()
+              },
+              [imageData.data.buffer]
+            );
+          } catch (error) {
+            this.workerReject = null;
+            reject(error);
+          }
+        }
+      );
+
+      if (currentTask !== this.taskId) return;
+
+      const outputContext = canvas.getContext('2d');
+
+      if (!outputContext) {
+        throw new Error('Could not create the result image.');
+      }
+
+      const outputPixels = new Uint8ClampedArray(result);
+
+      outputContext.putImageData(
+        new ImageData(outputPixels, width, height),
+        0,
+        0
+      );
+
+      this.resultPreview.set(canvas.toDataURL('image/png'));
+      this.resultReady.set(true);
+      this.errorMessage.set('');
+    } catch (error) {
+      if (currentTask === this.taskId) {
+        console.error('Image transformation failed:', error);
+
+        this.errorMessage.set(
+          error instanceof Error
+            ? error.message
+            : 'Transformation failed. Please try another image.'
+        );
+      }
+    } finally {
+      if (currentTask === this.taskId) {
+        this.stopWorker();
+        this.isProcessing.set(false);
+      }
+    }
+  }
+
+  downloadResult(): void {
+    const result = this.resultPreview();
+
+    if (!result) return;
+
+    const baseName =
+      this.fileName().replace(/\.[^.]+$/, '') || 'image';
+
+    const link = document.createElement('a');
+    link.href = result;
+    link.download = `${baseName}-${this.selectedStyle()}-cartoon.png`;
+    link.click();
+  }
+
+  clearImage(): void {
+    this.cancelProcessing();
+    this.clearPreviewUrl();
+
+    this.originalPreview.set(null);
+    this.resultPreview.set(null);
+    this.fileName.set('');
+    this.errorMessage.set('');
+    this.resultReady.set(false);
+  }
+
+  private cancelProcessing(): void {
+    // Invalidate any asynchronous work already in progress.
+    ++this.taskId;
+
+    this.stopWorker();
+    this.isProcessing.set(false);
+  }
+
+  private stopWorker(): void {
+    const worker = this.worker;
+    this.worker = null;
+
+    // Termination stops the worker's computation immediately.
+    worker?.terminate();
+
+    const reject = this.workerReject;
+    this.workerReject = null;
+
+    // Settle a pending promise if the worker was cancelled.
+    reject?.(
+      new DOMException('Image processing cancelled.', 'AbortError')
+    );
+  }
+
+  private loadImage(src: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+
+      image.onload = () => resolve(image);
+      image.onerror = () => {
+        reject(new Error('Unable to read the selected image.'));
+      };
+
+      image.src = src;
+    });
+  }
+
+  private clearPreviewUrl(): void {
+    if (this.previewUrl) {
+      URL.revokeObjectURL(this.previewUrl);
+    }
+
+    this.previewUrl = null;
+  }
+
+  ngOnDestroy(): void {
+    this.cancelProcessing();
+    this.clearPreviewUrl();
+  }
+}
