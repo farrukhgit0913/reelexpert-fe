@@ -439,3 +439,48 @@ button:focus-visible,
   }
 }
 
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.mode-card {
+  display: flex;
+  min-height: 132px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid #e3eaf5;
+  border-radius: 13px;
+  background: #fff;
+  color: #263b57;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+.mode-card:hover { border-color: #9dbcf5; transform: translateY(-1px); }
+.mode-card.active { border-color: #2878f0; background: #f2f7ff; box-shadow: inset 0 0 0 1px #2878f0; }
+.mode-icon { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; background: #eaf2ff; color: #2878f0; font-size: 21px; }
+.mode-card strong { font-size: 13px; }
+.mode-card small { color: #7b8a9e; font-size: 11px; line-height: 1.45; }
+.form-field { display: grid; gap: 8px; margin: 18px 0; }
+.form-field label { color: #344563; font-size: 12px; font-weight: 700; }
+.form-field textarea, .form-field select { width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #dbe4f0; border-radius: 9px; background: #fff; color: #253954; font: inherit; font-size: 12px; line-height: 1.6; }
+.form-field textarea { resize: vertical; }
+.form-field textarea:focus, .form-field select:focus { outline: 3px solid rgb(40 120 240 / 15%); border-color: #2878f0; }
+.form-field small { color: #8996a9; font-size: 11px; line-height: 1.5; }
+.status-message { color: #2465c8; font-size: 12px; line-height: 1.6; }
+.results-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.result-card { min-width: 0; padding: 12px; border: 1px solid #e5ebf4; border-radius: 12px; background: #fff; }
+.result-card .result-image { aspect-ratio: 3 / 4; max-height: 500px; object-fit: contain; }
+.result-meta { display: grid; gap: 5px; margin-top: 12px; }
+.result-meta strong { font-size: 12px; }
+.result-meta small { overflow-wrap: anywhere; color: #8996a9; font-size: 10px; }
+.download-button { min-height: 40px; font-size: 12px; }
+@media (max-width: 1000px) { .mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .results-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .mode-grid, .results-grid { grid-template-columns: 1fr; } .mode-card { min-height: auto; } }
+@media (prefers-reduced-motion: reduce) { .mode-card { transition: none; } }

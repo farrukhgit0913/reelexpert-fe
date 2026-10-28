@@ -21,10 +21,15 @@ export const routes: Routes = [
         .then(m => m.Reels)
   },
   {
-  path: 'image-to-cartoon',
-  loadComponent: () =>
-    import('./pages/image-to-cartoon/image-to-cartoon')
-      .then(m => m.ImageToCartoon)
+    path: 'image-studio',
+    loadComponent: () =>
+      import('./pages/image-to-cartoon/image-to-cartoon')
+        .then(m => m.ImageToCartoon)
+  },
+  {
+    path: 'image-to-cartoon',
+    redirectTo: 'image-studio',
+    pathMatch: 'full'
   },
   {
     path: 'analytics',

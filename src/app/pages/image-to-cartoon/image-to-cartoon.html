@@ -1,186 +1,101 @@
 <section class="cartoon-page">
   <header class="page-header">
     <div>
-      <p class="eyebrow">AI CREATIVE TOOLS</p>
-      <h1>Image to Cartoon</h1>
-      <p class="subtitle">Transform your photos into animated-style artwork.</p>
+      <p class="eyebrow">LOCAL AI CREATIVE SUITE</p>
+      <h1>AI Image Studio</h1>
+      <p class="subtitle">Eight creative workflows powered by your local FLUX.2 Klein model.</p>
     </div>
-    <span class="status-label">Image Studio</span>
+    <span class="status-label">Local model · 4 steps</span>
   </header>
+
+  <section class="mode-grid" aria-label="Image generation features">
+    @for (mode of modes; track mode.id) {
+      <button type="button" class="mode-card" [class.active]="selectedMode() === mode.id" [attr.aria-pressed]="selectedMode() === mode.id" (click)="selectMode(mode.id)">
+        <span class="mode-icon" aria-hidden="true">{{ mode.icon }}</span>
+        <strong>{{ mode.name }}</strong>
+        <small>{{ mode.description }}</small>
+      </button>
+    }
+  </section>
 
   <section class="workspace">
     <div class="upload-panel">
       <div class="section-heading">
         <span class="step">01</span>
-        <div>
-          <h2>Upload your image</h2>
-          <p>Choose a photo to get started.</p>
-        </div>
+        <div><h2>{{ modeNeedsImage() ? 'Upload a source image' : 'Add a reference image (optional)' }}</h2><p>{{ modeNeedsImage() ? 'This feature transforms an existing image.' : 'You can generate from text alone or include a reference.' }}</p></div>
       </div>
-
       <label class="upload-area" [class.has-image]="originalPreview()">
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          (change)="onFileSelected($event)"
-        />
-
+        <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onFileSelected($event)" />
         @if (originalPreview(); as preview) {
-          <img class="original-image" [src]="preview" alt="Uploaded image preview" />
+          <img class="original-image" [src]="preview" alt="Source image preview" />
           <span class="file-name">{{ fileName() }}</span>
           <span class="replace-hint">Click to choose another image</span>
         } @else {
-          <span class="upload-icon">↑</span>
-          <strong>Choose an image to upload</strong>
-          <span>Click to browse files</span>
-          <small>JPG, PNG or WebP · Maximum 10 MB</small>
+          <span class="upload-icon">↑</span><strong>Choose an image</strong><span>Click to browse files</span><small>JPG, PNG or WebP · Maximum 10 MB</small>
         }
       </label>
-
-      @if (errorMessage()) {
-        <p class="error-message">{{ errorMessage() }}</p>
-      }
-
-      @if (originalPreview()) {
-        <button class="text-button" type="button" (click)="clearImage()">
-          Remove image
-        </button>
-      }
+      @if (originalPreview()) { <button class="text-button" type="button" (click)="clearImage()">Remove image</button> }
     </div>
 
     <div class="settings-panel">
-      <div class="section-heading">
-        <span class="step">02</span>
-        <div>
-          <h2>Choose your style</h2>
-          <p>Select the look you want to create.</p>
+      <div class="section-heading"><span class="step">02</span><div><h2>{{ modeName() }} settings</h2><p>Describe the result you want.</p></div></div>
+
+      @if (selectedMode() === 'story-scenes') {
+        <div class="form-field">
+          <label for="story-script">Scene descriptions</label>
+          <textarea id="story-script" rows="6" maxlength="6000" [value]="storyScript()" (input)="storyScript.set($any($event.target).value)" placeholder="Scene 1: Zavi discovers a glowing map in the garden.&#10;Scene 2: Zoya follows the map into a magical forest.&#10;Scene 3: They help a lost baby fox.&#10;Scene 4: They return home and celebrate."></textarea>
+          <small>One scene per line. Generate up to four images per batch. Each image runs sequentially to protect your Mac's memory.</small>
+        </div>
+      } @else {
+        <div class="form-field">
+          <label for="studio-prompt">{{ selectedMode() === 'character-designer' ? 'Character description' : selectedMode() === 'thumbnail' ? 'Thumbnail concept' : selectedMode() === 'product-studio' ? 'Product scene instructions' : selectedMode() === 'character-variations' ? 'Variation instructions' : 'Creative instructions' }}</label>
+          <textarea id="studio-prompt" rows="5" maxlength="1500" [value]="prompt()" (input)="prompt.set($any($event.target).value)" [placeholder]="selectedMode() === 'character-designer' ? 'A cheerful young explorer with curly brown hair, teal jacket, orange backpack, friendly expression, full-body character design…' : selectedMode() === 'thumbnail' ? 'A colorful adventure thumbnail with two cartoon friends, dramatic sunset, clear focal point, leave clean space for title text…' : selectedMode() === 'background-restyle' ? 'Replace the background with a sunny seaside village while keeping the person and clothing as close as possible…' : selectedMode() === 'character-variations' ? 'Same character, winter outfit, surprised expression, three-quarter pose…' : selectedMode() === 'product-studio' ? 'Premium studio product shot, warm neutral background, soft shadows, clean commercial lighting…' : 'Describe the style, scene, lighting, colors and details you want…'"></textarea>
+        </div>
+      }
+
+      <div class="form-field">
+        <label>Visual style</label>
+        <div class="style-list">
+          @for (style of styles; track style.id) {
+            <button type="button" class="style-option" [class.selected]="selectedStyle() === style.id" [attr.aria-pressed]="selectedStyle() === style.id" (click)="selectStyle(style.id)">
+              <span class="style-radio">@if (selectedStyle() === style.id) { <span></span> }</span>
+              <span class="style-copy"><strong>{{ style.name }}</strong><small>{{ style.description }}</small></span>
+            </button>
+          }
         </div>
       </div>
 
-      <div class="style-list">
-        @for (style of styles; track style.id) {
-          <button
-            type="button"
-            class="style-option"
-            [class.selected]="selectedStyle() === style.id"
-            [attr.aria-pressed]="selectedStyle() === style.id"
-            (click)="selectStyle(style.id)"
-          >
-            <span class="style-radio">
-              @if (selectedStyle() === style.id) {
-                <span></span>
-              }
-            </span>
-            <span class="style-copy">
-              <strong>{{ style.name }}</strong>
-              <small>{{ style.description }}</small>
-            </span>
-          </button>
-        }
+      <div class="form-field">
+        <label for="aspect-ratio">Output format</label>
+        <select id="aspect-ratio" [value]="aspectRatio()" (change)="aspectRatio.set($any($event.target).value)">
+          <option value="portrait">Portrait 3:4</option><option value="vertical">Vertical 9:16</option><option value="square">Square 1:1</option><option value="landscape">Landscape 4:3</option><option value="widescreen">Widescreen 16:9</option>
+        </select>
       </div>
 
-      
-<div class="form-field">
-  <label for="cartoon-prompt"><strong>Additional instructions (optional)</strong></label>
-  <textarea
-    id="cartoon-prompt"
-    rows="3"
-    maxlength="1500"
-    [value]="prompt()"
-    (input)="prompt.set($any($event.target).value)"
-    placeholder="e.g. warm sunset lighting, colorful clothes, preserve the person's face"
-  ></textarea>
-  <small>FLUX.2 Klein uses these instructions along with your selected style.</small>
-</div>
-
-<div class="model-notice">
-  <strong>Local AI generation</strong>
-  <p>
-    Your image is processed by FLUX.2 Klein on this Mac through the local
-    ReelExpert backend. Generation can take several minutes.
-  </p>
-</div>
-
-<button
-  class="generate-button"
-  type="button"
-  [disabled]="!originalPreview() || isProcessing()"
-  (click)="transformImage()"
->
-  @if (isProcessing()) {
-    <span class="spinner" aria-hidden="true"></span>
-    Processing image...
-  } @else {
-    <span>✦</span>
-    Transform image
-  }
-</button>
-
-@if (errorMessage()) {
-  <p class="error-message" role="alert">{{ errorMessage() }}</p>
-}
-
-<p class="privacy-note">
-  Image processing runs locally in your browser. No paid API is used.
-</p>
-
-
-      <p class="privacy-note">
-        Your image preview is created locally in your browser.
-      </p>
+      <div class="model-notice"><strong>Runs on your local model</strong><p>FLUX.2 Klein generation currently takes around a minute per image on your Mac. Story scenes are queued sequentially. Generated files are saved under the backend assets output directory.</p></div>
+      @if (errorMessage()) { <p class="error-message" role="alert">{{ errorMessage() }}</p> }
+      @if (statusMessage()) { <p class="status-message" role="status">{{ statusMessage() }}</p> }
+      <button class="generate-button" type="button" [disabled]="isProcessing()" (click)="generate()">
+        @if (isProcessing()) { <span class="spinner" aria-hidden="true"></span> Generating… } @else { <span>✦</span> Generate {{ selectedMode() === 'story-scenes' ? 'scenes' : 'image' }} }
+      </button>
+      <p class="privacy-note">Local inference only. No external image-generation API is used by this feature.</p>
     </div>
   </section>
 
-
-<section class="result-panel">
-  <div class="section-heading">
-    <span class="step">03</span>
-    <div>
-      <h2>Your cartoon result</h2>
-      <p>
-        @if (resultReady()) {
-          Your {{ selectedStyle() }} effect is ready.
-        } @else {
-          Your transformed image will appear here.
+  <section class="result-panel">
+    <div class="section-heading"><span class="step">03</span><div><h2>Generated assets</h2><p>Your results appear here and are saved by the backend.</p></div></div>
+    @if (resultImages().length) {
+      <div class="results-grid">
+        @for (asset of resultImages(); track asset.filename) {
+          <article class="result-card">
+            <img class="result-image" [src]="asset.url" [alt]="asset.prompt" />
+            <div class="result-meta"><strong>{{ asset.sceneNumber ? 'Scene ' + asset.sceneNumber : modeName() }}</strong><small>{{ asset.filename }}</small></div>
+            <button class="generate-button download-button" type="button" (click)="download(asset)">Download PNG</button>
+          </article>
         }
-      </p>
-    </div>
-  </div>
-
-  @if (resultPreview(); as result) {
-    <div class="result-content">
-      <img class="result-image" [src]="result" alt="Transformed cartoon image" />
-      <div class="result-actions">
-        <button
-          class="generate-button"
-          type="button"
-          (click)="downloadResult()"
-        >
-          Download PNG
-        </button>
-        <button
-          class="text-button"
-          type="button"
-          (click)="transformImage()"
-          [disabled]="isProcessing()"
-        >
-          Try again
-        </button>
       </div>
-    </div>
-  } @else {
-    <div class="empty-result">
-      <span class="result-icon">✧</span>
-      <strong>
-        {{ isProcessing() ? 'Transforming your image...' : 'Ready for your creative transformation' }}
-      </strong>
-      <p>
-        {{ isProcessing()
-          ? 'FLUX.2 Klein is generating your image. This can take several minutes.'
-          : 'Upload an image, choose a style, and select Transform image.' }}
-      </p>
-    </div>
-  }
-</section>
-
+    } @else {
+      <div class="empty-result"><span class="result-icon">✧</span><strong>{{ isProcessing() ? 'Creating your artwork…' : 'Ready for your next idea' }}</strong><p>{{ isProcessing() ? 'Keep this tab and the local FLUX service running while generation finishes.' : 'Choose one of the eight tools, describe your idea, and generate your first asset.' }}</p></div>
+    }
+  </section>
 </section>
